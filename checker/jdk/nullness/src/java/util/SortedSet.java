@@ -1,5 +1,6 @@
 package java.util;
 import org.checkerframework.dataflow.qual.SideEffectFree;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // Some instantiations of this class prohibit null elements.

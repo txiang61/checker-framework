@@ -2,6 +2,7 @@ package java.util;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // Subclasses of this interface may opt to prohibit null keys.

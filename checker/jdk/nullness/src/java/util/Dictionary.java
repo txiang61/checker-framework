@@ -1,6 +1,7 @@
 package java.util;
 import org.checkerframework.dataflow.qual.Pure;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // This class prohibits null keys and values.
