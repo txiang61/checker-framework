@@ -22,12 +22,11 @@ public class MisuseProperties {
         System.setProperty("line.separator", null);
 
         Dictionary d1 = p;
-        // No error, because Dictionary value has Nullable bound.
-        //:: warning: [unchecked] unchecked call to put(K,V) as a member of the raw type java.util.Dictionary
+        //:: error: (argument.type.incompatible) ::warning: [unchecked] unchecked call to put(K,V) as a member of the raw type java.util.Dictionary
         d1.put("line.separator", null);
 
-        //:: error: (assignment.type.incompatible)
-        Dictionary<Object, @Nullable Object> d2 = p;
+        Dictionary<Object, Object> d2 = p;
+        //:: error: (argument.type.incompatible)
         d2.put("line.separator", null);
 
         System.setProperties(p); // OK; p has no null values

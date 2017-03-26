@@ -2,6 +2,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.qual.Pure;
 
@@ -80,7 +81,7 @@ enum IdentityFunction implements Function<Object, @Nullable Object> {
     }
 }
 
-abstract class FilteredCollection<E> implements Collection<E> {
+abstract class FilteredCollection<E extends @NonNull Object> implements Collection<E> {
     public boolean addAll(Collection<? extends E> collection) {
         for (E element : collection) {}
         return true;
