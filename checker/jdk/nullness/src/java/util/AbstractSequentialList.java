@@ -3,7 +3,7 @@ import org.checkerframework.dataflow.qual.Pure;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-// Subclasses of this interface/class may opt to prohibit null elements
+// Subclasses of this abstract class may opt to prohibit null elements.
 public abstract class AbstractSequentialList<E extends @Nullable Object> extends AbstractList<E> {
   protected AbstractSequentialList() {}
   @Pure public E get(int a1) { throw new RuntimeException("skeleton method"); }

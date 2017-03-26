@@ -6,7 +6,7 @@ import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-// This collection can only contain nonnull values
+// This collection can only contain nonnull keys and values
 public class Hashtable<K extends @NonNull Object, V extends @NonNull Object> extends Dictionary<K, V> implements Map<K, V>, Cloneable, java.io.Serializable {
   private static final long serialVersionUID = 0;
   public Hashtable(int a1, float a2) { throw new RuntimeException("skeleton method"); }
@@ -17,9 +17,9 @@ public class Hashtable<K extends @NonNull Object, V extends @NonNull Object> ext
   @Pure public synchronized boolean isEmpty() { throw new RuntimeException("skeleton method"); }
   public synchronized Enumeration<K> keys() { throw new RuntimeException("skeleton method"); }
   public synchronized Enumeration<V> elements() { throw new RuntimeException("skeleton method"); }
-  @Pure public synchronized boolean contains(Object a1) { throw new RuntimeException("skeleton method"); }
-  @Pure public boolean containsValue(@Nullable Object a1) { throw new RuntimeException("skeleton method"); }
-  @Pure public synchronized boolean containsKey(@Nullable Object a1) { throw new RuntimeException("skeleton method"); }
+  @Pure public synchronized boolean contains(@NonNull Object a1) { throw new RuntimeException("skeleton method"); }
+  @Pure public boolean containsValue(@NonNull Object a1) { throw new RuntimeException("skeleton method"); }
+  @Pure public synchronized boolean containsKey(@NonNull Object a1) { throw new RuntimeException("skeleton method"); }
   @Pure public synchronized @Nullable V get(Object a1) { throw new RuntimeException("skeleton method"); }
   public synchronized @Nullable V put(K a1, V a2) { throw new RuntimeException("skeleton method"); }
   public synchronized @Nullable V remove(Object a1) { throw new RuntimeException("skeleton method"); }

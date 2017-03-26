@@ -5,12 +5,12 @@ import org.checkerframework.dataflow.qual.Pure;
 
 import java.util.stream.Stream;
 
-// Subclasses of this interface/class may opt to prohibit null elements
-public interface Collection<E extends @Nullable Object> extends Iterable<E> {
+// Subclasses of this interface/class may opt to prohibit null elements.
+public interface Collection<E extends @NonNull Object> extends Iterable<E> {
   @Pure int size();
   @Pure boolean isEmpty();
   // not true, because map could contain nulls:  AssertParametersNonNull("get(#1)")
-  @Pure boolean contains(@Nullable Object a1);
+  @Pure boolean contains(@NonNull Object a1);
   @Override
   Iterator<E> iterator();
   // The Nullness Checker does NOT use these signatures for either version
@@ -20,7 +20,7 @@ public interface Collection<E extends @Nullable Object> extends Iterable<E> {
   Object [] toArray();
   <T extends @Nullable Object> @Nullable T @PolyNull [] toArray(T @PolyNull [] a1);
   boolean add(E a1);
-  boolean remove(@Nullable Object a1);
+  boolean remove(@NonNull Object a1);
   @Pure public abstract boolean containsAll(Collection<?> a1);
   boolean addAll(Collection<? extends E> a1);
   boolean removeAll(Collection<?> a1);

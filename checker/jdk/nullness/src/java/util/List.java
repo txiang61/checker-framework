@@ -112,7 +112,7 @@ import org.checkerframework.checker.nullness.qual.PolyNull;
  * @since 1.2
  */
 
-// Subclasses of this interface/class may opt to prohibit null elements
+// Subclasses of this interface may opt to prohibit null elements.
 public interface List<E extends @Nullable Object> extends Collection<E> {
     // Query Operations
 
@@ -150,7 +150,7 @@ public interface List<E extends @Nullable Object> extends Collection<E> {
      * (<a href="Collection.html#optional-restrictions">optional</a>)
      */
     @Pure
-    boolean contains(@Nullable Object o);
+    boolean contains(@NonNull Object o);
 
     /**
      * Returns an iterator over the elements in this list in proper sequence.
@@ -270,7 +270,7 @@ public interface List<E extends @Nullable Object> extends Collection<E> {
      * @throws UnsupportedOperationException if the <tt>remove</tt> operation
      *         is not supported by this list
      */
-    boolean remove(@Nullable Object o);
+    boolean remove(@NonNull Object o);
 
 
     // Bulk Modification Operations
@@ -530,7 +530,7 @@ public interface List<E extends @Nullable Object> extends Collection<E> {
      *         (<a href="Collection.html#optional-restrictions">optional</a>)
      */
     @Pure
-    int indexOf(@Nullable Object o);
+    int indexOf(@NonNull Object o);
 
     /**
      * Returns the index of the last occurrence of the specified element
@@ -550,7 +550,7 @@ public interface List<E extends @Nullable Object> extends Collection<E> {
      *         (<a href="Collection.html#optional-restrictions">optional</a>)
      */
     @Pure
-    int lastIndexOf(@Nullable Object o);
+    int lastIndexOf(@NonNull Object o);
 
 
     // List Iterators

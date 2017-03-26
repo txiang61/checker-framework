@@ -4,8 +4,8 @@ import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-// Subclasses of this interface/class may opt to prohibit null elements
-public interface NavigableMap<K extends @Nullable Object, V extends @Nullable Object> extends SortedMap<K, V> {
+// Subclasses of this interface may opt to prohibit null keys.
+public interface NavigableMap<K extends @NonNull Object, V extends @Nullable Object> extends SortedMap<K, V> {
   public abstract Map. @Nullable Entry<K, V> lowerEntry(K a1);
   public abstract @Nullable K lowerKey(K a1);
   public abstract Map. @Nullable Entry<K, V> floorEntry(K a1);

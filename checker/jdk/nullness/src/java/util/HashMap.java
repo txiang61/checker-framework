@@ -5,6 +5,7 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+// Permits null keys and values
 public class HashMap<K extends @Nullable Object, V extends @Nullable Object> extends AbstractMap<K, V> implements Map<K, V>, Cloneable, java.io.Serializable {
   private static final long serialVersionUID = 0;
   public HashMap(int a1, float a2) { throw new RuntimeException("skeleton method"); }

@@ -5,8 +5,9 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-// This class allows null elements
-public class IdentityHashMap<K extends @Nullable Object, V extends @Nullable Object> extends AbstractMap<K, V> implements Map<K, V>, java.io.Serializable, Cloneable {
+// This class allows null elements and values
+public class IdentityHashMap<K extends @Nullable Object, V extends @Nullable Object>
+    extends AbstractMap<K, V> implements Map<K, V>, java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 0;
   public IdentityHashMap() { throw new RuntimeException("skeleton method"); }
   public IdentityHashMap(int a1) { throw new RuntimeException("skeleton method"); }

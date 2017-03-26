@@ -3,14 +3,14 @@ import org.checkerframework.dataflow.qual.Pure;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-// Subclasses of this interface/class may opt to prohibit null elements
-public abstract class Dictionary<K extends @Nullable Object, V extends @Nullable Object> {
+// This class prohibits null keys and values.
+public abstract class Dictionary<K extends @NonNull Object, V extends @NonNull Object> {
   public Dictionary() { throw new RuntimeException("skeleton method"); }
   @Pure public abstract int size();
   @Pure public abstract boolean isEmpty();
   public abstract Enumeration<K> keys();
   public abstract Enumeration<V> elements();
-  @Pure public abstract @Nullable V get(@Nullable Object a1);
+  @Pure public abstract @Nullable V get(@NonNull Object a1);
   public abstract @Nullable V put(K a1, V a2);
-  public abstract @Nullable V remove(Object a1);
+  public abstract @Nullable V remove(@NonNull Object a1);
 }

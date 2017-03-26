@@ -7,7 +7,7 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-// Subclasses of this interface/class may opt to prohibit null elements
+// Some instantiations of this abstract class may prohibit null elements.
 public abstract class AbstractCollection<E extends @Nullable Object> implements Collection<E> {
   protected AbstractCollection() {}
   @Override
@@ -17,7 +17,7 @@ public abstract class AbstractCollection<E extends @Nullable Object> implements 
   @Override
   @Pure public boolean isEmpty() { throw new RuntimeException("skeleton method"); }
   @Override
-  @Pure public boolean contains(@Nullable Object a1) { throw new RuntimeException("skeleton method"); }
+  @Pure public boolean contains(@NonNull Object a1) { throw new RuntimeException("skeleton method"); }
   @Override
   public Object [] toArray() { throw new RuntimeException("skeleton method"); }
   @Override
@@ -25,7 +25,7 @@ public abstract class AbstractCollection<E extends @Nullable Object> implements 
   @Override
   public boolean add(E a1) { throw new RuntimeException("skeleton method"); }
   @Override
-  public boolean remove(@Nullable Object a1) { throw new RuntimeException("skeleton method"); }
+  public boolean remove(@NonNull Object a1) { throw new RuntimeException("skeleton method"); }
   @Override
   @Pure public boolean containsAll(Collection<?> a1) { throw new RuntimeException("skeleton method"); }
   @Override

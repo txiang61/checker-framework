@@ -5,7 +5,7 @@ import org.checkerframework.checker.nullness.qual.Covariant;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-// Subclasses of this interface/class may opt to prohibit null elements
+// Subclasses of this interface may opt to prohibit null keys and/or values.
 public interface Map<K extends @Nullable Object, V extends @Nullable Object> {
   @Covariant(0)
   public static interface Entry<K extends @Nullable Object, V extends @Nullable Object> {
@@ -17,17 +17,17 @@ public interface Map<K extends @Nullable Object, V extends @Nullable Object> {
   }
   @Pure public abstract int size();
   @Pure public abstract boolean isEmpty();
-  @Pure public abstract boolean containsKey(@Nullable Object a1);
-  @Pure public abstract boolean containsValue(@Nullable Object a1);
+  @Pure public abstract boolean containsKey(@NonNull Object a1);
+  @Pure public abstract boolean containsValue(@NonNull Object a1);
   // The parameter is not nullable, because implementations of Map.get and
   // Map.put are specifically permitted to throw NullPointerException if
   // any of the arguments is a null).  And some implementations do not
   // permit nulls (sorted queues PriorityQueue, Hashtable, most concurrent
   // collections).  Some other implementation do accept nulls and are so
   // annotatied (see ArrayList, LinkedList, HashMap).
-  @Pure public abstract @Nullable V get(@Nullable Object a1);
+  @Pure public abstract @Nullable V get(@NonNull Object a1);
   public abstract @Nullable V put(K a1, V a2);
-  public abstract @Nullable V remove(@Nullable Object a1);
+  public abstract @Nullable V remove(@NonNull Object a1);
   public abstract void putAll(Map<? extends K, ? extends V> a1);
   public abstract void clear();
   @SideEffectFree public abstract Set<@KeyFor("this") K> keySet();

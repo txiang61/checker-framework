@@ -179,7 +179,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
-public interface BlockingQueue<E> extends Queue<E> {
+// This interface does not permit null values
+public interface BlockingQueue<E extends @NonNull Object> extends Queue<E> {
     /**
      * Inserts the specified element into this queue if it is possible to do
      * so immediately without violating capacity restrictions, returning
