@@ -3,6 +3,7 @@ import org.checkerframework.dataflow.qual.*;
 
 import org.checkerframework.checker.nullness.qual.Covariant;
 import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // Subclasses of this interface may opt to prohibit null keys and/or values.

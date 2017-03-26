@@ -1,11 +1,13 @@
 package java.util;
+
+import java.util.Collection;
+import java.util.stream.Stream;
+
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.dataflow.qual.SideEffectFree;
-
-import java.util.Collection;
-import java.util.stream.Stream;
 
 // Some instantiations of this abstract class may prohibit null elements.
 public abstract class AbstractCollection<E extends @Nullable Object> implements Collection<E> {
