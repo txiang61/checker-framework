@@ -58,7 +58,7 @@ public interface CharSequence {
      *
      * @return  the number of <code>char</code>s in this sequence
      */
-    @NonNegative int length();
+    @LengthOf("this") int length();
 
     /**
      * Returns the <code>char</code> value at the specified index.  An index ranges from zero
@@ -78,7 +78,7 @@ public interface CharSequence {
      *          if the <tt>index</tt> argument is negative or not less than
      *          <tt>length()</tt>
      */
-    char charAt(/*@ IndexFor("this")*/ int index);
+    char charAt(@IndexFor("this") int index);
 
     /**
      * Returns a new <code>CharSequence</code> that is a subsequence of this sequence.
@@ -98,7 +98,7 @@ public interface CharSequence {
      *          if <tt>end</tt> is greater than <tt>length()</tt>,
      *          or if <tt>start</tt> is greater than <tt>end</tt>
      */
-    CharSequence subSequence(/*@ IndexFor("this")*/ int start, /*@ IndexOrHigh("this")*/ int end);
+    CharSequence subSequence(@IndexOrHigh("this") int start, @IndexOrHigh("this") int end);
 
     /**
      * Returns a string containing the characters in this sequence in the same
@@ -107,6 +107,6 @@ public interface CharSequence {
      *
      * @return  a string consisting of exactly this sequence of characters
      */
-    public String toString();
+    public @SameLen("this") String toString();
 
 }

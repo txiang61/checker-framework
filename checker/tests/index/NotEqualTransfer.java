@@ -1,4 +1,4 @@
-import org.checkerframework.checker.index.qual.MinLen;
+import org.checkerframework.common.value.qual.MinLen;
 
 class NotEqualTransfer {
     void neq_check(int[] a) {
@@ -13,7 +13,7 @@ class NotEqualTransfer {
         if (1 != a.length) {
             int x = 1; // do nothing.
         } else {
-            //:: error: (assignment.type.incompatible)
+            // :: error: (assignment.type.incompatible)
             int @MinLen(2) [] b = a;
         }
     }

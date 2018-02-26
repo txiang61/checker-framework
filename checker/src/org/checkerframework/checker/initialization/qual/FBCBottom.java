@@ -12,13 +12,14 @@ import org.checkerframework.framework.qual.TargetLocations;
 import org.checkerframework.framework.qual.TypeUseLocation;
 
 /**
- * {@link FBCBottom} marks the bottom of the Freedom Before Commitment type hierarchy.
+ * The bottom type in the Freedom Before Commitment type system. Programmers should rarely write
+ * this type.
  *
  * @checker_framework.manual #initialization-checker Initialization Checker
- * @author Stefan Heule
+ * @checker_framework.manual #bottom-type the bottom type
  */
 @SubtypeOf({UnderInitialization.class, Initialized.class})
-@ImplicitFor(literals = {LiteralKind.NULL})
+@ImplicitFor(literals = LiteralKind.NULL)
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})

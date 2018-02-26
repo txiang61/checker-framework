@@ -1,4 +1,4 @@
-import org.checkerframework.checker.index.qual.MinLen;
+import org.checkerframework.common.value.qual.MinLen;
 
 class GreaterThanTransfer {
     void gt_check(int[] a) {
@@ -9,7 +9,7 @@ class GreaterThanTransfer {
 
     void gt_bad_check(int[] a) {
         if (a.length > 0) {
-            //:: error: (assignment.type.incompatible)
+            // :: error: (assignment.type.incompatible)
             int @MinLen(2) [] b = a;
         }
     }

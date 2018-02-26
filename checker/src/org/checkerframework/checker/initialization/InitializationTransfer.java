@@ -51,7 +51,6 @@ import org.checkerframework.javacutil.TreeUtils;
  *       class can safely be considered initialized.
  * </ol>
  *
- * @author Stefan Heule
  * @see InitializationStore
  * @param <T> the type of the transfer function
  */
@@ -137,8 +136,8 @@ public class InitializationTransfer<
                 // This was raised by Issue 244.
                 continue;
             }
-            AnnotatedTypeMirror fieldAnno = atypeFactory.getAnnotatedType(field);
-            if (fieldAnno.hasAnnotation(atypeFactory.getFieldInvariantAnnotation())) {
+            AnnotatedTypeMirror fieldType = atypeFactory.getAnnotatedType(field);
+            if (atypeFactory.hasFieldInvariantAnnotation(fieldType)) {
                 result.add(field);
             }
         }

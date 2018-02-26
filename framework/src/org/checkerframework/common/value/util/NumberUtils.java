@@ -12,6 +12,9 @@ public class NumberUtils {
     /** Converts a {@code List<A>} to a {@code List<B>}, where A and B are numeric types. */
     public static List<? extends Number> castNumbers(
             TypeMirror type, List<? extends Number> numbers) {
+        if (numbers == null) {
+            return null;
+        }
         TypeKind typeKind = unBoxPrimitive(type);
         switch (typeKind) {
             case BYTE:
@@ -20,6 +23,12 @@ public class NumberUtils {
                     bytes.add(l.byteValue());
                 }
                 return bytes;
+            case CHAR:
+                List<Integer> chars = new ArrayList<>();
+                for (Number l : numbers) {
+                    chars.add(l.intValue());
+                }
+                return chars;
             case DOUBLE:
                 List<Double> doubles = new ArrayList<>();
                 for (Number l : numbers) {
@@ -50,6 +59,25 @@ public class NumberUtils {
                     shorts.add(l.shortValue());
                 }
                 return shorts;
+            default:
+                throw new UnsupportedOperationException(typeKind.toString());
+        }
+    }
+
+    public static Range castRange(TypeMirror type, Range range) {
+        TypeKind typeKind = unBoxPrimitive(type);
+        switch (typeKind) {
+            case INT:
+                return range.intRange();
+            case SHORT:
+                return range.shortRange();
+            case BYTE:
+                return range.byteRange();
+            case LONG:
+            case CHAR:
+            case FLOAT:
+            case DOUBLE:
+                return range;
             default:
                 throw new UnsupportedOperationException(typeKind.toString());
         }

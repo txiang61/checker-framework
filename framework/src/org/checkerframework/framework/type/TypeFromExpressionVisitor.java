@@ -37,7 +37,6 @@ import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutab
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedWildcardType;
 import org.checkerframework.framework.type.visitor.AnnotatedTypeMerger;
 import org.checkerframework.framework.util.AnnotatedTypes;
-import org.checkerframework.javacutil.InternalUtils;
 import org.checkerframework.javacutil.Pair;
 import org.checkerframework.javacutil.TreeUtils;
 
@@ -96,8 +95,9 @@ class TypeFromExpressionVisitor extends TypeFromTreeVisitor {
             ConditionalExpressionTree node, AnnotatedTypeFactory f) {
         // The Java type of a conditional expression is generally the LUB of the boxed types
         // of the true and false expressions, but with a few exceptions. See JLS 15.25.
-        // So, use the type of the ConditionalExpressionTree instead of InternalUtils#leastUpperBound
-        TypeMirror alub = InternalUtils.typeOf(node);
+        // So, use the type of the ConditionalExpressionTree instead of
+        // InternalUtils#leastUpperBound
+        TypeMirror alub = TreeUtils.typeOf(node);
 
         AnnotatedTypeMirror trueType = f.getAnnotatedType(node.getTrueExpression());
         AnnotatedTypeMirror falseType = f.getAnnotatedType(node.getFalseExpression());
@@ -139,7 +139,6 @@ class TypeFromExpressionVisitor extends TypeFromTreeVisitor {
             // the type of a class literal is the type of the "class" element.
             return f.getAnnotatedType(elt);
         }
-        String kind = elt.getKind().toString();
         switch (elt.getKind()) {
             case METHOD:
             case PACKAGE: // "java.lang" in new java.lang.Short("2")
@@ -155,7 +154,7 @@ class TypeFromExpressionVisitor extends TypeFromTreeVisitor {
         if (node.getIdentifier().contentEquals("this")) {
             // TODO: why don't we use getSelfType here?
             return f.getEnclosingType(
-                    (TypeElement) InternalUtils.symbol(node.getExpression()), node);
+                    (TypeElement) TreeUtils.elementFromTree(node.getExpression()), node);
         } else {
             // node must be a field access, so get the type of the expression, and then call
             // asMemberOf.
@@ -215,25 +214,25 @@ class TypeFromExpressionVisitor extends TypeFromTreeVisitor {
         while (level.getKind() == TypeKind.ARRAY) {
             AnnotatedArrayType array = (AnnotatedArrayType) level;
             List<? extends AnnotationMirror> annos =
-                    InternalUtils.annotationsFromArrayCreation(node, idx++);
+                    TreeUtils.annotationsFromArrayCreation(node, idx++);
             array.addAnnotations(annos);
             level = array.getComponentType();
         }
 
         // Add top-level annotations.
-        result.addAnnotations(InternalUtils.annotationsFromArrayCreation(node, -1));
+        result.addAnnotations(TreeUtils.annotationsFromArrayCreation(node, -1));
     }
 
     /**
      * Creates an AnnotatedDeclaredType for the NewClassTree and adds, for each hierarchy, one of:
      *
      * <ul>
-     *   <li>an explicit annotation on the new class expression ({@code new @HERE MyClass()} ), or
-     *   <li>an explicit annotation on the declaration of the class ({@code @HERE class MyClass {}}
-     *       ), or
+     *   <li>an explicit annotation on the new class expression ({@code new @HERE MyClass()}), or
+     *   <li>an explicit annotation on the declaration of the class ({@code @HERE class MyClass
+     *       {}}), or
      *   <li>an explicit annotation on the declaration of the constructor ({@code @HERE public
-     *       MyClass() {}} ), or
-     *   <li>no annotation for a this hierarchy.
+     *       MyClass() {}}), or
+     *   <li>no annotation for this hierarchy.
      * </ul>
      *
      * @param node NewClassTree
@@ -269,7 +268,7 @@ class TypeFromExpressionVisitor extends TypeFromTreeVisitor {
             MemberReferenceTree node, AnnotatedTypeFactory f) {
 
         AnnotatedDeclaredType type =
-                (AnnotatedDeclaredType) f.toAnnotatedType(InternalUtils.typeOf(node), false);
+                (AnnotatedDeclaredType) f.toAnnotatedType(TreeUtils.typeOf(node), false);
         return type;
     }
 
@@ -278,7 +277,7 @@ class TypeFromExpressionVisitor extends TypeFromTreeVisitor {
             LambdaExpressionTree node, AnnotatedTypeFactory f) {
 
         AnnotatedDeclaredType type =
-                (AnnotatedDeclaredType) f.toAnnotatedType(InternalUtils.typeOf(node), false);
+                (AnnotatedDeclaredType) f.toAnnotatedType(TreeUtils.typeOf(node), false);
         return type;
     }
 
@@ -317,7 +316,8 @@ class TypeFromExpressionVisitor extends TypeFromTreeVisitor {
         // the first time getSuperBound/getExtendsBound is called the bound of this wildcard will be
         // appropriately initialized where for the type of node, instead of replacing that bound
         // we merge the annotations onto the initialized bound
-        // This ensures that the structure of the wildcard will match that created by BoundsInitializer/createType
+        // This ensures that the structure of the wildcard will match that created by
+        // BoundsInitializer/createType
         if (node.getKind() == Tree.Kind.SUPER_WILDCARD) {
             AnnotatedTypeMerger.merge(bound, ((AnnotatedWildcardType) result).getSuperBound());
 

@@ -2,6 +2,7 @@ package org.checkerframework.framework.util.typeinference.constraint;
 
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedTypeVariable;
+import org.checkerframework.framework.util.typeinference.TypeArgInferenceUtil;
 
 /**
  * Subclasses of TUConstraint represent constraints between a type parameter, whose type arguments
@@ -47,13 +48,27 @@ public abstract class TUConstraint {
 
     public final int hashcodeBase;
 
+    /** Whether or not U is a type from an argument to the method. */
+    public final boolean uIsArg;
+
     public TUConstraint(
             final AnnotatedTypeVariable typeVariable,
             final AnnotatedTypeMirror relatedType,
             int hashcodeBase) {
+        this(typeVariable, relatedType, hashcodeBase, false);
+    }
+
+    public TUConstraint(
+            final AnnotatedTypeVariable typeVariable,
+            final AnnotatedTypeMirror relatedType,
+            int hashcodeBase,
+            boolean uIsArg) {
         this.typeVariable = typeVariable;
         this.relatedType = relatedType;
         this.hashcodeBase = hashcodeBase;
+        this.uIsArg = uIsArg;
+
+        TypeArgInferenceUtil.checkForUninferredTypes(relatedType);
     }
 
     @Override

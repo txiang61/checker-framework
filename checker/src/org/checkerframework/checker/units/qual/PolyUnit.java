@@ -17,7 +17,8 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
  * <p>The following example shows how method {@code triplePolyUnit} can be used to process either
  * meters or seconds:
  *
- * <pre> {@literal @}PolyUnit int triplePolyUnit(@PolyUnit int amount) {
+ * <pre><code>
+ * {@literal @}PolyUnit int triplePolyUnit(@PolyUnit int amount) {
  *    return 3*amount;
  *  }
  *
@@ -28,10 +29,10 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
  *   {@literal @}s int sec1 = 7 * UnitsTools.s;
  *   {@literal @}s int sec2 = triplePolyUnit(sec1);
  *
- *    //:: error: (assignment.type.incompatible)
+ *    // :: error: (assignment.type.incompatible)
  *   {@literal @}s int sec3 = triplePolyUnit(m1);
  *  }
- * </pre>
+ * </code></pre>
  *
  * @checker_framework.manual #units-checker Units Checker
  * @checker_framework.manual #qualifier-polymorphism Qualifier polymorphism

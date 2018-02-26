@@ -12,8 +12,6 @@ import org.checkerframework.framework.qual.InheritedAnnotation;
  * Indicates that the given expressions are held if the method terminates successfully and returns
  * the given result (either true or false).
  *
- * <p>
- *
  * @see EnsuresLockHeld
  * @checker_framework.manual #lock-checker Lock Checker
  * @checker_framework.manual #ensureslockheld-examples Example use of @EnsuresLockHeldIf
@@ -30,6 +28,9 @@ public @interface EnsuresLockHeldIf {
      * @see <a href="https://checkerframework.org/manual/#java-expressions-as-arguments">Syntax of
      *     Java expressions</a>
      */
+    // It would be clearer for users if this field were named "lock".
+    // However, method ContractUtils.getConditionalPostconditions in the CF implementation assumes
+    // that conditional postconditions have a field named "expression".
     String[] expression();
 
     /** The return value of the method that needs to hold for the postcondition to hold. */

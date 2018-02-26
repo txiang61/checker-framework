@@ -17,6 +17,7 @@ import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -30,9 +31,11 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVariable;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
+import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedPrimitiveType;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedTypeVariable;
+import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedWildcardType;
 import org.checkerframework.framework.type.GenericAnnotatedTypeFactory;
 import org.checkerframework.framework.type.QualifierHierarchy;
 import org.checkerframework.framework.type.TypeVariableSubstitutor;
@@ -41,49 +44,49 @@ import org.checkerframework.framework.util.AnnotatedTypes;
 import org.checkerframework.framework.util.AnnotationMirrorMap;
 import org.checkerframework.framework.util.AnnotationMirrorSet;
 import org.checkerframework.javacutil.ErrorReporter;
-import org.checkerframework.javacutil.InternalUtils;
+import org.checkerframework.javacutil.Pair;
 import org.checkerframework.javacutil.TreeUtils;
+import org.checkerframework.javacutil.TypeAnnotationUtils;
+import org.checkerframework.javacutil.TypesUtils;
 
 /** Miscellaneous utilities to help in type argument inference. */
 public class TypeArgInferenceUtil {
 
     /**
-     * Takes an expression tree that must be either a MethodInovcationTree or a NewClassTree
-     * (constructor invocation) and returns the arguments to its formal parameters. An
-     * IllegalArgumentException will be thrown if it is neither
+     * Returns a list of boxed annotated types corresponding to the arguments in {@code
+     * methodInvocation}.
      *
-     * @param expression a MethodInvocationTree or a NewClassTree
-     * @return the list of arguments to Expression
+     * @param methodInvocation {@link MethodInvocationTree} or {@link NewClassTree}
+     * @param typeFactory type factory
+     * @return a list of boxed annotated types corresponding to the arguments in {@code
+     *     methodInvocation}.
      */
-    public static List<? extends ExpressionTree> expressionToArgTrees(
-            final ExpressionTree expression) {
+    public static List<AnnotatedTypeMirror> getArgumentTypes(
+            final ExpressionTree methodInvocation, final AnnotatedTypeFactory typeFactory) {
         final List<? extends ExpressionTree> argTrees;
-        if (expression.getKind() == Kind.METHOD_INVOCATION) {
-            argTrees = ((MethodInvocationTree) expression).getArguments();
 
-        } else if (expression.getKind() == Kind.NEW_CLASS) {
-            argTrees = ((NewClassTree) expression).getArguments();
+        if (methodInvocation.getKind() == Kind.METHOD_INVOCATION) {
+            argTrees = ((MethodInvocationTree) methodInvocation).getArguments();
+
+        } else if (methodInvocation.getKind() == Kind.NEW_CLASS) {
+            argTrees = ((NewClassTree) methodInvocation).getArguments();
 
         } else {
-            argTrees = null;
-        }
-
-        if (argTrees == null) {
-            throw new IllegalArgumentException(
+            ErrorReporter.errorAbort(
                     "TypeArgumentInference.relationsFromMethodArguments:\n"
                             + "couldn't determine arguments from tree: "
-                            + expression);
+                            + methodInvocation);
+            throw new Error(); // dead code
         }
 
-        return argTrees;
-    }
-
-    /** Calls get annotated types on a List of trees using the given type factory. */
-    public static List<AnnotatedTypeMirror> treesToTypes(
-            final List<? extends ExpressionTree> argTrees, final AnnotatedTypeFactory typeFactory) {
         final List<AnnotatedTypeMirror> argTypes = new ArrayList<>(argTrees.size());
         for (Tree arg : argTrees) {
-            argTypes.add(typeFactory.getAnnotatedType(arg));
+            AnnotatedTypeMirror argType = typeFactory.getAnnotatedType(arg);
+            if (TypesUtils.isPrimitive(argType.getUnderlyingType())) {
+                argTypes.add(typeFactory.getBoxedType((AnnotatedPrimitiveType) argType));
+            } else {
+                argTypes.add(argType);
+            }
         }
 
         return argTypes;
@@ -96,7 +99,9 @@ public class TypeArgInferenceUtil {
     public static boolean isATarget(
             final AnnotatedTypeMirror type, final Set<TypeVariable> targetTypeVars) {
         return type.getKind() == TypeKind.TYPEVAR
-                && targetTypeVars.contains(type.getUnderlyingType());
+                && targetTypeVars.contains(
+                        (TypeVariable)
+                                TypeAnnotationUtils.unannotatedType(type.getUnderlyingType()));
     }
 
     /**
@@ -108,7 +113,8 @@ public class TypeArgInferenceUtil {
         final Set<TypeVariable> targets = new LinkedHashSet<>(annotatedTypeVars.size());
 
         for (final AnnotatedTypeVariable atv : annotatedTypeVars) {
-            targets.add(atv.getUnderlyingType());
+            targets.add(
+                    (TypeVariable) TypeAnnotationUtils.unannotatedType(atv.getUnderlyingType()));
         }
 
         return targets;
@@ -117,20 +123,21 @@ public class TypeArgInferenceUtil {
     /**
      * Returns the annotated type that the leaf of path is assigned to, if it is within an
      * assignment context. Returns the annotated type that the method invocation at the leaf is
-     * assigned to.
+     * assigned to. If the result is a primitive, return the boxed version.
      *
-     * @return type that it path leaf is assigned to
+     * @return type that path leaf is assigned to
      */
     public static AnnotatedTypeMirror assignedTo(AnnotatedTypeFactory atypeFactory, TreePath path) {
         Tree assignmentContext = TreeUtils.getAssignmentContext(path);
+        AnnotatedTypeMirror res;
         if (assignmentContext == null) {
-            return null;
+            res = null;
         } else if (assignmentContext instanceof AssignmentTree) {
             ExpressionTree variable = ((AssignmentTree) assignmentContext).getVariable();
-            return atypeFactory.getAnnotatedType(variable);
+            res = atypeFactory.getAnnotatedType(variable);
         } else if (assignmentContext instanceof CompoundAssignmentTree) {
             ExpressionTree variable = ((CompoundAssignmentTree) assignmentContext).getVariable();
-            return atypeFactory.getAnnotatedType(variable);
+            res = atypeFactory.getAnnotatedType(variable);
         } else if (assignmentContext instanceof MethodInvocationTree) {
             MethodInvocationTree methodInvocation = (MethodInvocationTree) assignmentContext;
             // TODO move to getAssignmentContext
@@ -141,12 +148,17 @@ public class TypeArgInferenceUtil {
             }
             ExecutableElement methodElt = TreeUtils.elementFromUse(methodInvocation);
             AnnotatedTypeMirror receiver = atypeFactory.getReceiverType(methodInvocation);
-            return assignedToExecutable(
-                    atypeFactory, path, methodElt, receiver, methodInvocation.getArguments());
+            res =
+                    assignedToExecutable(
+                            atypeFactory,
+                            path,
+                            methodElt,
+                            receiver,
+                            methodInvocation.getArguments());
         } else if (assignmentContext instanceof NewArrayTree) {
-            //TODO: I left the previous implementation below, it definitely caused infinite loops if you
-            //TODO: called it from places like the TreeAnnotator
-            return null;
+            // TODO: I left the previous implementation below, it definitely caused infinite loops
+            // TODO: if you called it from places like the TreeAnnotator.
+            res = null;
 
             // FIXME: This may cause infinite loop
             //            AnnotatedTypeMirror type =
@@ -157,27 +169,39 @@ public class TypeArgInferenceUtil {
         } else if (assignmentContext instanceof NewClassTree) {
             // This need to be basically like MethodTree
             NewClassTree newClassTree = (NewClassTree) assignmentContext;
-            ExecutableElement constructorElt = InternalUtils.constructor(newClassTree);
+            ExecutableElement constructorElt = TreeUtils.constructor(newClassTree);
             AnnotatedTypeMirror receiver = atypeFactory.fromNewClass(newClassTree);
-            return assignedToExecutable(
-                    atypeFactory, path, constructorElt, receiver, newClassTree.getArguments());
+            res =
+                    assignedToExecutable(
+                            atypeFactory,
+                            path,
+                            constructorElt,
+                            receiver,
+                            newClassTree.getArguments());
         } else if (assignmentContext instanceof ReturnTree) {
             HashSet<Kind> kinds = new HashSet<>(Arrays.asList(Kind.LAMBDA_EXPRESSION, Kind.METHOD));
             Tree enclosing = TreeUtils.enclosingOfKind(path, kinds);
 
             if (enclosing.getKind() == Kind.METHOD) {
-                return (atypeFactory.getAnnotatedType((MethodTree) enclosing)).getReturnType();
-
+                res = (atypeFactory.getAnnotatedType((MethodTree) enclosing)).getReturnType();
             } else {
-                return atypeFactory.getFnInterfaceFromTree((LambdaExpressionTree) enclosing).first;
+                Pair<AnnotatedDeclaredType, AnnotatedExecutableType> fninf =
+                        atypeFactory.getFnInterfaceFromTree((LambdaExpressionTree) enclosing);
+                res = fninf.second.getReturnType();
             }
 
         } else if (assignmentContext instanceof VariableTree) {
-            return assignedToVariable(atypeFactory, assignmentContext);
+            res = assignedToVariable(atypeFactory, assignmentContext);
+        } else {
+            ErrorReporter.errorAbort("AnnotatedTypes.assignedTo: shouldn't be here!");
+            res = null;
         }
 
-        ErrorReporter.errorAbort("AnnotatedTypes.assignedTo: shouldn't be here!");
-        return null; // dead code
+        if (res != null && TypesUtils.isPrimitive(res.getUnderlyingType())) {
+            return atypeFactory.getBoxedType((AnnotatedPrimitiveType) res);
+        } else {
+            return res;
+        }
     }
 
     private static AnnotatedTypeMirror assignedToExecutable(
@@ -200,10 +224,12 @@ public class TypeArgInferenceUtil {
                 break;
             }
         }
-        assert treeIndex != -1
-                : "Could not find path in MethodInvocationTree.\n" + "treePath=" + path.toString();
         final AnnotatedTypeMirror paramType;
-        if (treeIndex >= method.getParameterTypes().size() && methodElt.isVarArgs()) {
+        if (treeIndex == -1) {
+            // The tree wasn't found as an argument, so it has to be the receiver.
+            // This can happen for inner class constructors that take an outer class argument.
+            paramType = method.getReceiverType();
+        } else if (treeIndex >= method.getParameterTypes().size() && methodElt.isVarArgs()) {
             paramType = method.getParameterTypes().get(method.getParameterTypes().size() - 1);
         } else {
             paramType = method.getParameterTypes().get(treeIndex);
@@ -300,11 +326,26 @@ public class TypeArgInferenceUtil {
         final List<TypeVariable> typeVars = new ArrayList<>(annotatedTypeVars.size());
 
         for (AnnotatedTypeVariable annotatedTypeVar : annotatedTypeVars) {
-            typeVars.add(annotatedTypeVar.getUnderlyingType());
+            typeVars.add(
+                    (TypeVariable)
+                            TypeAnnotationUtils.unannotatedType(
+                                    annotatedTypeVar.getUnderlyingType()));
         }
 
+        return containsTypeParameter(type, typeVars);
+    }
+
+    /**
+     * Returns true if {@code type} contains a use of a type variable in {@code typeVariables}.
+     *
+     * @param type type to search
+     * @param typeVariables collection of type varibles
+     * @return true if {@code type} contains a use of a type variable in {@code typeVariables}
+     */
+    public static boolean containsTypeParameter(
+            AnnotatedTypeMirror type, Collection<TypeVariable> typeVariables) {
         // note NULL values creep in because the underlying visitor uses them in various places
-        final Boolean result = type.accept(new TypeVariableFinder(), typeVars);
+        final Boolean result = type.accept(new TypeVariableFinder(), typeVariables);
         return result != null && result;
     }
 
@@ -324,15 +365,30 @@ public class TypeArgInferenceUtil {
     }
 
     /**
+     * Checks that the type is not an uninferred type argument. If it is, errorAbort will be called.
+     * The error will be caught in DefaultTypeArgumentInference#infer and inference will be aborted,
+     * but type-checking will continue.
+     */
+    public static void checkForUninferredTypes(AnnotatedTypeMirror type) {
+        if (type.getKind() != TypeKind.WILDCARD) {
+            return;
+        }
+        if (((AnnotatedWildcardType) type).isUninferredTypeArgument()) {
+            ErrorReporter.errorAbort(
+                    "Can't make a constraint that includes an uninferred type argument.");
+        }
+    }
+
+    /**
      * Used to detect if the visited type contains one of the type variables in the typeVars
      * parameter
      */
     private static class TypeVariableFinder
-            extends AnnotatedTypeScanner<Boolean, List<TypeVariable>> {
+            extends AnnotatedTypeScanner<Boolean, Collection<TypeVariable>> {
 
         @Override
         protected Boolean scan(
-                Iterable<? extends AnnotatedTypeMirror> types, List<TypeVariable> typeVars) {
+                Iterable<? extends AnnotatedTypeMirror> types, Collection<TypeVariable> typeVars) {
             if (types == null) {
                 return false;
             }
@@ -358,8 +414,10 @@ public class TypeArgInferenceUtil {
         }
 
         @Override
-        public Boolean visitTypeVariable(AnnotatedTypeVariable type, List<TypeVariable> typeVars) {
-            if (typeVars.contains(type.getUnderlyingType())) {
+        public Boolean visitTypeVariable(
+                AnnotatedTypeVariable type, Collection<TypeVariable> typeVars) {
+            if (typeVars.contains(
+                    (TypeVariable) TypeAnnotationUtils.unannotatedType(type.getUnderlyingType()))) {
                 return true;
             } else {
                 return super.visitTypeVariable(type, typeVars);
@@ -374,7 +432,8 @@ public class TypeArgInferenceUtil {
      */
     private static final TypeVariableSubstitutor substitutor = new TypeVariableSubstitutor();
 
-    // Substituter requires an input map that the substitute methods build.  We just reuse the same map rather than
+    // Substituter requires an input map that the substitute methods build.  We just reuse the same
+    // map rather than
     // recreate it each time.
     private static final Map<TypeVariable, AnnotatedTypeMirror> substituteMap = new HashMap<>(5);
 
@@ -395,14 +454,23 @@ public class TypeArgInferenceUtil {
     }
 
     /**
-     * Create a copy of toModify. In the copy, For each pair {@code typeVariable &rArr; annotated
+     * Create a copy of toModify. In the copy, for each pair {@code typeVariable &rArr; annotated
      * type} replace uses of typeVariable with the corresponding annotated type using normal
-     * substitution rules (@see TypeVariableSubstitutor) Return the copy
+     * substitution rules (@see TypeVariableSubstitutor). Return the copy.
      */
     public static AnnotatedTypeMirror substitute(
             Map<TypeVariable, AnnotatedTypeMirror> substitutions,
             final AnnotatedTypeMirror toModify) {
-        final AnnotatedTypeMirror substitution = substitutions.get(toModify.getUnderlyingType());
+        final AnnotatedTypeMirror substitution;
+        if (toModify.getKind() == TypeKind.TYPEVAR) {
+            substitution =
+                    substitutions.get(
+                            (TypeVariable)
+                                    TypeAnnotationUtils.unannotatedType(
+                                            toModify.getUnderlyingType()));
+        } else {
+            substitution = null;
+        }
         if (substitution != null) {
             return substitution.deepCopy();
         }

@@ -1,15 +1,5 @@
 package org.checkerframework.common.wholeprograminference;
 
-import annotations.Annotation;
-import annotations.el.AClass;
-import annotations.el.AField;
-import annotations.el.AMethod;
-import annotations.el.AScene;
-import annotations.el.ATypeElement;
-import annotations.el.DefException;
-import annotations.el.InnerTypeLocation;
-import annotations.io.IndexFileParser;
-import annotations.io.IndexFileWriter;
 import com.sun.tools.javac.code.TypeAnnotationPosition;
 import java.io.File;
 import java.io.FileWriter;
@@ -38,14 +28,24 @@ import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedNullType
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedTypeVariable;
 import org.checkerframework.javacutil.ErrorReporter;
 import org.checkerframework.javacutil.Pair;
+import scenelib.annotations.Annotation;
+import scenelib.annotations.el.AClass;
+import scenelib.annotations.el.AField;
+import scenelib.annotations.el.AMethod;
+import scenelib.annotations.el.AScene;
+import scenelib.annotations.el.ATypeElement;
+import scenelib.annotations.el.DefException;
+import scenelib.annotations.el.InnerTypeLocation;
+import scenelib.annotations.io.IndexFileParser;
+import scenelib.annotations.io.IndexFileWriter;
 
 /**
  * This class stores annotations for fields, method return types, and method parameters.
  *
  * <p>The set of annotations inferred for a certain class is stored in an {@link
- * annotations.el.AScene}, which {@link #writeScenesToJaif} can write into a .jaif file. For
- * example, a class field of a class whose fully-qualified name is {@code my.package.MyClass} will
- * have its inferred type stored in a Scene, and later written into a file named {@code
+ * scenelib.annotations.el.AScene}, which {@link #writeScenesToJaif} can write into a .jaif file.
+ * For example, a class field of a class whose fully-qualified name is {@code my.package.MyClass}
+ * will have its inferred type stored in a Scene, and later written into a file named {@code
  * my.package.MyClass.jaif}.
  *
  * <p>This class populates the initial Scenes by reading existing .jaif files on the {@link
@@ -240,22 +240,23 @@ public class WholeProgramInferenceScenesHelper {
      * #shouldIgnore}).
      */
     private void removeIgnoredAnnosFromATypeElement(ATypeElement typeEl, TypeUseLocation loc) {
-        Set<Annotation> annosToRemove = new HashSet<>();
-        Set<String> annosToIgnoreForLocation = annosToIgnore.get(Pair.of(typeEl.toString(), loc));
-        if (annosToIgnoreForLocation == null) {
-            // No annotations to ignore for that position.
-            return;
-        }
-        for (Annotation anno : typeEl.tlAnnotationsHere) {
-            if (annosToIgnoreForLocation.contains(anno.def().toString())) {
-                annosToRemove.add(anno);
+        String firstKey = typeEl.description.toString() + typeEl.tlAnnotationsHere.toString();
+        Set<String> annosToIgnoreForLocation = annosToIgnore.get(Pair.of(firstKey, loc));
+        if (annosToIgnoreForLocation != null) {
+            Set<Annotation> annosToRemove = new HashSet<>();
+            for (Annotation anno : typeEl.tlAnnotationsHere) {
+                if (annosToIgnoreForLocation.contains(anno.def().toString())) {
+                    annosToRemove.add(anno);
+                }
             }
+            typeEl.tlAnnotationsHere.removeAll(annosToRemove);
         }
-        typeEl.tlAnnotationsHere.removeAll(annosToRemove);
 
-        // Remove annotations recursively for inner types.
-        for (ATypeElement innerType : typeEl.innerTypes.values()) {
-            removeIgnoredAnnosFromATypeElement(innerType, loc);
+        // Recursively remove ignored annotations from inner types
+        if (typeEl.innerTypes.size() != 0) {
+            for (ATypeElement innerType : typeEl.innerTypes.values()) {
+                removeIgnoredAnnosFromATypeElement(innerType, loc);
+            }
         }
     }
 
@@ -287,9 +288,12 @@ public class WholeProgramInferenceScenesHelper {
                 break;
                 //        case WILDCARD:
                 // Because inferring type arguments is not supported, wildcards won't be encoutered
-                //            updatesATMWithLUB(atf, ((AnnotatedWildcardType) sourceCodeATM).getExtendsBound(),
-                //                              ((AnnotatedWildcardType) jaifATM).getExtendsBound());
-                //            updatesATMWithLUB(atf, ((AnnotatedWildcardType) sourceCodeATM).getSuperBound(),
+                //            updatesATMWithLUB(atf, ((AnnotatedWildcardType)
+                // sourceCodeATM).getExtendsBound(),
+                //                              ((AnnotatedWildcardType)
+                // jaifATM).getExtendsBound());
+                //            updatesATMWithLUB(atf, ((AnnotatedWildcardType)
+                // sourceCodeATM).getSuperBound(),
                 //                              ((AnnotatedWildcardType) jaifATM).getSuperBound());
                 //            break;
             case ARRAY:
@@ -322,9 +326,9 @@ public class WholeProgramInferenceScenesHelper {
     }
 
     /**
-     * Returns true if am should not be inserted in source code, for example {@link
-     * org.checkerframework.common.value.qual.BottomVal}. This happens when am cannot be inserted in
-     * source code or is the default for the location passed as argument.
+     * Returns true if {@code am} should not be inserted in source code, for example {@link
+     * org.checkerframework.common.value.qual.BottomVal}. This happens when {@code am} cannot be
+     * inserted in source code or is the default for the location passed as argument.
      *
      * <p>Invisible qualifiers, which are annotations that contain the {@link
      * org.checkerframework.framework.qual.InvisibleQualifier} meta-annotation, also return true.
@@ -367,15 +371,16 @@ public class WholeProgramInferenceScenesHelper {
             }
         }
 
-        // Checks if am is an implicit annotation
-        // TODO: Handles cases of implicit annotations added via an
-        // org.checkerframework.framework.type.treeannotator.ImplicitsTreeAnnotator
+        // Checks if am is an implicit annotation.
+        // This case checks if it is meta-annotated with @ImplicitFor.
+        // TODO: Handle cases of implicit annotations added via an
+        // org.checkerframework.framework.type.treeannotator.ImplicitsTreeAnnotator.
         ImplicitFor implicitFor = elt.getAnnotation(ImplicitFor.class);
         if (implicitFor != null) {
-            TypeKind[] types = implicitFor.types();
+            org.checkerframework.framework.qual.TypeKind[] types = implicitFor.types();
             TypeKind atmKind = atm.getUnderlyingType().getKind();
-            for (TypeKind tk : types) {
-                if (tk == atmKind) return true;
+            if (hasMatchingTypeKind(atmKind, types)) {
+                return true;
             }
 
             try {
@@ -398,6 +403,17 @@ public class WholeProgramInferenceScenesHelper {
         return false;
     }
 
+    /** Returns true, iff a matching TypeKind is found. */
+    private boolean hasMatchingTypeKind(
+            TypeKind atmKind, org.checkerframework.framework.qual.TypeKind[] types) {
+        for (org.checkerframework.framework.qual.TypeKind tk : types) {
+            if (tk.name().equals(atmKind.name())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Returns a subset of annosSet, consisting of the annotations supported by atf. */
     private Set<Annotation> getSupportedAnnosInSet(
             Set<Annotation> annosSet, AnnotatedTypeFactory atf) {
@@ -417,10 +433,10 @@ public class WholeProgramInferenceScenesHelper {
 
     /**
      * Updates an {@link org.checkerframework.framework.type.AnnotatedTypeMirror} to contain the
-     * {@link annotations.Annotation}s of an {@link annotations.el.ATypeElement}.
+     * {@link scenelib.annotations.Annotation}s of an {@link scenelib.annotations.el.ATypeElement}.
      *
      * @param atm the AnnotatedTypeMirror to be modified
-     * @param type the {@link annotations.el.ATypeElement}
+     * @param type the {@link scenelib.annotations.el.ATypeElement}
      * @param atf the annotated type factory of a given type system, whose type hierarchy will be
      *     used
      */
@@ -447,7 +463,7 @@ public class WholeProgramInferenceScenesHelper {
     }
 
     /**
-     * Updates an {@link annotations.el.ATypeElement} to have the annotations of an {@link
+     * Updates an {@link scenelib.annotations.el.ATypeElement} to have the annotations of an {@link
      * org.checkerframework.framework.type.AnnotatedTypeMirror} passed as argument. Annotations in
      * the original set that should be ignored (see {@link #shouldIgnore}) are not added to the
      * resulting set. This method also checks if the AnnotatedTypeMirror has explicit annotations in
@@ -491,19 +507,22 @@ public class WholeProgramInferenceScenesHelper {
         // Only update the ATypeElement if there are no explicit annotations
         if (curATM.getExplicitAnnotations().size() == 0) {
             for (AnnotationMirror am : newATM.getAnnotations()) {
-                addAnnotationsToATypeElement(newATM, atf, typeToUpdate, defLoc, am);
+                addAnnotationsToATypeElement(
+                        newATM, atf, typeToUpdate, defLoc, am, curATM.hasEffectiveAnnotation(am));
             }
         } else if (curATM.getKind() == TypeKind.TYPEVAR) {
-            // getExplicitAnnotations will be non-empty for type vars whose bounds are explicitly annotated.
-            // So instead, only insert the annotation if there is not primary annotation of the same hierarchy.
-            // #shouldIgnore prevent annotations that are subtypes of type vars upper bound from being inserted.
+            // getExplicitAnnotations will be non-empty for type vars whose bounds are explicitly
+            // annotated.  So instead, only insert the annotation if there is not primary annotation
+            // of the same hierarchy.  #shouldIgnore prevent annotations that are subtypes of type
+            // vars upper bound from being inserted.
             for (AnnotationMirror am : newATM.getAnnotations()) {
                 if (curATM.getAnnotationInHierarchy(am) != null) {
                     // Don't insert if the type is already has a primary annotation
                     // in the same hierarchy.
                     break;
                 }
-                addAnnotationsToATypeElement(newATM, atf, typeToUpdate, defLoc, am);
+                addAnnotationsToATypeElement(
+                        newATM, atf, typeToUpdate, defLoc, am, curATM.hasEffectiveAnnotation(am));
             }
         }
 
@@ -529,12 +548,18 @@ public class WholeProgramInferenceScenesHelper {
             AnnotatedTypeFactory atf,
             ATypeElement typeToUpdate,
             TypeUseLocation defLoc,
-            AnnotationMirror am) {
+            AnnotationMirror am,
+            boolean isEffectiveAnnotation) {
         Annotation anno = AnnotationConverter.annotationMirrorToAnnotation(am);
         if (anno != null) {
             typeToUpdate.tlAnnotationsHere.add(anno);
-            if (shouldIgnore(am, defLoc, atf, newATM)) {
-                Pair<String, TypeUseLocation> key = Pair.of(typeToUpdate.toString(), defLoc);
+            if (isEffectiveAnnotation || shouldIgnore(am, defLoc, atf, newATM)) {
+                // firstKey works as a unique identifier for each annotation
+                // that should not be inserted in source code
+                String firstKey =
+                        typeToUpdate.description.toString()
+                                + typeToUpdate.tlAnnotationsHere.toString();
+                Pair<String, TypeUseLocation> key = Pair.of(firstKey, defLoc);
                 Set<String> annosIgnored = annosToIgnore.get(key);
                 if (annosIgnored == null) {
                     annosIgnored = new HashSet<>();

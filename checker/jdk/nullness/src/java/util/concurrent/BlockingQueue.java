@@ -40,6 +40,7 @@ import java.util.Queue;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.dataflow.qual.Pure;
 
 /**
  * A {@link java.util.Queue} that additionally supports operations
@@ -326,7 +327,7 @@ public interface BlockingQueue<E extends @NonNull Object> extends Queue<E> {
      * @throws NullPointerException if the specified element is null
      *         (<a href="../Collection.html#optional-restrictions">optional</a>)
      */
-    public boolean contains(Object o);
+    @Pure public boolean contains(Object o);
 
     /**
      * Removes all available elements from this queue and adds them

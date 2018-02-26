@@ -1,10 +1,12 @@
 package java.util;
+
+import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.dataflow.qual.*;
 
-import org.checkerframework.checker.nullness.qual.Covariant;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.framework.qual.Covariant;
 
 // Subclasses of this interface may opt to prohibit null keys and/or values.
 public interface Map<K extends @Nullable Object, V extends @Nullable Object> {

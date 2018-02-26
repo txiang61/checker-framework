@@ -1,11 +1,10 @@
 package org.checkerframework.checker.i18nformatter;
-/*>>>
-import org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey;
-*/
+
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
+import org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey;
 import org.checkerframework.checker.formatter.FormatterTreeUtil.InvocationType;
 import org.checkerframework.checker.formatter.FormatterTreeUtil.Result;
 import org.checkerframework.checker.i18nformatter.I18nFormatterTreeUtil.FormatType;
@@ -23,7 +22,6 @@ import org.checkerframework.javacutil.AnnotationUtils;
  * string verification.
  *
  * @checker_framework.manual #i18n-formatter-checker Internationalization Format String Checker
- * @author Siwakorn Srisakaokul
  */
 public class I18nFormatterVisitor extends BaseTypeVisitor<I18nFormatterAnnotatedTypeFactory> {
 
@@ -122,11 +120,12 @@ public class I18nFormatterVisitor extends BaseTypeVisitor<I18nFormatterAnnotated
             AnnotatedTypeMirror varType,
             AnnotatedTypeMirror valueType,
             Tree valueTree,
-            /*@CompilerMessageKey*/ String errorKey) {
+            @CompilerMessageKey String errorKey) {
         AnnotationMirror rhs = valueType.getAnnotationInHierarchy(atypeFactory.I18NUNKNOWNFORMAT);
         AnnotationMirror lhs = varType.getAnnotationInHierarchy(atypeFactory.I18NUNKNOWNFORMAT);
 
-        // i18nformat.missing.arguments and i18nformat.excess.arguments are issued here for assignments.
+        // i18nformat.missing.arguments and i18nformat.excess.arguments are issued here for
+        // assignments.
         // For method calls, they are issued in checkInvocationFormatFor.
         if (AnnotationUtils.areSameIgnoringValues(rhs, atypeFactory.I18NFORMAT)
                 && AnnotationUtils.areSameIgnoringValues(lhs, atypeFactory.I18NFORMAT)) {
@@ -147,7 +146,8 @@ public class I18nFormatterVisitor extends BaseTypeVisitor<I18nFormatterAnnotated
                         valueTree);
             } else if (rhsArgTypes.length > lhsArgTypes.length) {
                 // Since it is known that too many conversion categories were provided,
-                // issue a more specific error message to that effect than assignment.type.incompatible.
+                // issue a more specific error message to that effect than
+                // assignment.type.incompatible.
                 checker.report(
                         org.checkerframework.framework.source.Result.failure(
                                 "i18nformat.excess.arguments",
@@ -158,7 +158,8 @@ public class I18nFormatterVisitor extends BaseTypeVisitor<I18nFormatterAnnotated
         }
 
         // By calling super.commonAssignmentCheck last, any i18nformat.excess.arguments message
-        // issued for a given line of code will take precedence over the assignment.type.incompatible
+        // issued for a given line of code will take precedence over the
+        // assignment.type.incompatible
         // issued by super.commonAssignmentCheck.
         super.commonAssignmentCheck(varType, valueType, valueTree, errorKey);
     }

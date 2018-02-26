@@ -1,4 +1,10 @@
-import org.checkerframework.checker.index.qual.*;
+import org.checkerframework.checker.index.qual.GTENegativeOne;
+import org.checkerframework.checker.index.qual.LTEqLengthOf;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.Positive;
+import org.checkerframework.checker.index.qual.SameLen;
+import org.checkerframework.common.value.qual.MinLen;
 
 class Issue58Minimization {
 
@@ -8,7 +14,7 @@ class Issue58Minimization {
             @NonNegative int y = z;
         }
         if ((z = x) != 1) {
-            //:: error: (assignment.type.incompatible)
+            // :: error: (assignment.type.incompatible)
             @NonNegative int y = z;
         }
     }

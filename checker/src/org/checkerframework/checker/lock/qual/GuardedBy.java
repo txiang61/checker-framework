@@ -18,13 +18,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import javax.lang.model.type.TypeKind;
 import org.checkerframework.framework.qual.DefaultFor;
 import org.checkerframework.framework.qual.DefaultInUncheckedCodeFor;
 import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.ImplicitFor;
 import org.checkerframework.framework.qual.JavaExpression;
 import org.checkerframework.framework.qual.SubtypeOf;
+import org.checkerframework.framework.qual.TypeKind;
 import org.checkerframework.framework.qual.TypeUseLocation;
 
 /**
@@ -43,8 +43,6 @@ import org.checkerframework.framework.qual.TypeUseLocation;
  *
  * <p>Two {@code @GuardedBy} annotations with different argument expressions are unrelated by
  * subtyping.
- *
- * <p>
  *
  * @see Holding
  * @checker_framework.manual #lock-checker Lock Checker

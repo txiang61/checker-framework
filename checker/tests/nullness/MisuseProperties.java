@@ -10,23 +10,25 @@ import org.checkerframework.checker.nullness.qual.*;
 public class MisuseProperties {
 
     void propertiesToHashtable(Properties p) {
-        //:: error: (argument.type.incompatible)
+        // :: error: (argument.type.incompatible)
         p.setProperty("line.separator", null);
-        //:: error: (argument.type.incompatible)
+        // :: error: (argument.type.incompatible)
         p.put("line.separator", null);
         Hashtable h = p;
         // Error, because HashTable value has NonNull bound.
-        //:: error: (argument.type.incompatible) :: warning: [unchecked] unchecked call to put(K,V) as a member of the raw type java.util.Hashtable
+        // TODO: false negative. See #365.
+        //// :: error: (argument.type.incompatible) :: warning: [unchecked] unchecked call to put(K,V) as a member of the raw type java.util.Hashtable
+        // :: warning: [unchecked] unchecked call to put(K,V) as a member of the raw type java.util.Hashtable
         h.put("line.separator", null);
-        //:: error: (argument.type.incompatible)
+        // :: error: (argument.type.incompatible)
         System.setProperty("line.separator", null);
 
         Dictionary d1 = p;
-        //:: error: (argument.type.incompatible) ::warning: [unchecked] unchecked call to put(K,V) as a member of the raw type java.util.Dictionary
+        // :: error: (argument.type.incompatible) ::warning: [unchecked] unchecked call to put(K,V) as a member of the raw type java.util.Dictionary
         d1.put("line.separator", null);
 
         Dictionary<Object, Object> d2 = p;
-        //:: error: (argument.type.incompatible)
+        // :: error: (argument.type.incompatible)
         d2.put("line.separator", null);
 
         System.setProperties(p); // OK; p has no null values

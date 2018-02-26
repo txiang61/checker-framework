@@ -1,4 +1,4 @@
-import org.checkerframework.checker.index.qual.MinLen;
+import org.checkerframework.common.value.qual.MinLen;
 
 class EqualToTransfer {
     void eq_check(int[] a) {
@@ -12,7 +12,7 @@ class EqualToTransfer {
 
     void eq_bad_check(int[] a) {
         if (1 == a.length) {
-            //:: error: (assignment.type.incompatible)
+            // :: error: (assignment.type.incompatible)
             int @MinLen(2) [] b = a;
         }
     }

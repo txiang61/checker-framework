@@ -6,7 +6,7 @@
  * @run main Driver Fields
  */
 
-import static com.sun.tools.classfile.TypeAnnotation.TargetType.*;
+import static com.sun.tools.classfile.TypeAnnotation.TargetType.FIELD;
 
 public class Fields {
 
@@ -175,7 +175,7 @@ public class Fields {
             type = FIELD
         ),
 
-        //in front of Object             //TODO: NEXT ANNO CHANGE TO NULLABLE WHEN WE GET JDK WORKING WITH THIS
+        // in front of Object //TODO: NEXT ANNO CHANGE TO NULLABLE WHEN WE GET JDK WORKING WITH THIS
         @TADescription(
             annotation = "org/checkerframework/checker/nullness/qual/NonNull",
             type = FIELD,

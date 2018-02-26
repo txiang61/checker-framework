@@ -12,6 +12,7 @@ import org.checkerframework.framework.util.AnnotationMirrorSet;
 import org.checkerframework.framework.util.typeinference.constraint.TIsU;
 import org.checkerframework.framework.util.typeinference.constraint.TSuperU;
 import org.checkerframework.framework.util.typeinference.constraint.TUConstraint;
+import org.checkerframework.javacutil.TypeAnnotationUtils;
 
 /** Converts a set of TUConstraints into a ConstraintMap. */
 public class ConstraintMapBuilder {
@@ -67,8 +68,19 @@ public class ConstraintMapBuilder {
             final AnnotatedTypeVariable typeT = constraint.typeVariable;
             final AnnotatedTypeMirror typeU = constraint.relatedType;
 
-            if (typeU.getKind() == TypeKind.TYPEVAR
-                    && targets.contains(typeU.getUnderlyingType())) {
+            // If typeU is from an argument to the method, then treat typeU as an ordinary type even
+            // if it is a target type variable.  This is for the case where the inferred type is the
+            // declared type parameter.  For example,
+            // public <T> T get(T t) {
+            //   return this.get(t);
+            // }
+            // The inferred type of T should be T.
+            if (!constraint.uIsArg
+                    && typeU.getKind() == TypeKind.TYPEVAR
+                    && targets.contains(
+                            (TypeVariable)
+                                    TypeAnnotationUtils.unannotatedType(
+                                            typeU.getUnderlyingType()))) {
                 if (typeT.getAnnotations().isEmpty() && typeU.getAnnotations().isEmpty()) {
                     hierarchiesInRelation.addAll(tops);
 
@@ -96,13 +108,16 @@ public class ConstraintMapBuilder {
                         }
                     }
 
-                    // If we have a case where Ti = @NonNull Tj  we know that for the @Initialization
-                    // hierarchy Ti = TJ and we know that for the @Nullable hierarchy Ti = @NonNull <some other type>
-                    // this step saves @NonNull annotation.
-                    // This case also covers the case where i = j
+                    // If we have a case where Ti = @NonNull Tj we know that for the @Initialization
+                    // hierarchy Ti = TJ and we know that for the @Nullable hierarchy Ti = @NonNull
+                    // <some other type>.
+                    // This step saves @NonNull annotation.
+                    // This case also covers the case where i = j.
                     if (!tAnnos.isEmpty()) {
                         addToPrimaryRelationship(
-                                typeT.getUnderlyingType(),
+                                (TypeVariable)
+                                        TypeAnnotationUtils.unannotatedType(
+                                                typeT.getUnderlyingType()),
                                 constraint,
                                 result,
                                 tAnnos,
@@ -111,7 +126,9 @@ public class ConstraintMapBuilder {
 
                     if (!uAnnos.isEmpty()) {
                         addToPrimaryRelationship(
-                                (TypeVariable) typeU.getUnderlyingType(),
+                                (TypeVariable)
+                                        TypeAnnotationUtils.unannotatedType(
+                                                typeU.getUnderlyingType()),
                                 constraint,
                                 result,
                                 uAnnos,
@@ -119,11 +136,15 @@ public class ConstraintMapBuilder {
                     }
                 }
 
-                // This is the case where we have a relationship between two different targets (Ti <?> Tj and i != j)
-                if (!typeT.getUnderlyingType().equals(typeU.getUnderlyingType())) {
+                // This is the case where we have a relationship between two different targets (Ti
+                // <?> Tj and i != j)
+                if (!TypeAnnotationUtils.unannotatedType(typeT.getUnderlyingType())
+                        .equals(TypeAnnotationUtils.unannotatedType(typeU.getUnderlyingType()))) {
                     addToTargetRelationship(
-                            typeT.getUnderlyingType(),
-                            (TypeVariable) typeU.getUnderlyingType(),
+                            (TypeVariable)
+                                    TypeAnnotationUtils.unannotatedType(typeT.getUnderlyingType()),
+                            (TypeVariable)
+                                    TypeAnnotationUtils.unannotatedType(typeU.getUnderlyingType()),
                             result,
                             constraint,
                             hierarchiesInRelation);
@@ -138,7 +159,8 @@ public class ConstraintMapBuilder {
                 }
 
                 addToTypeRelationship(
-                        typeT.getUnderlyingType(),
+                        (TypeVariable)
+                                TypeAnnotationUtils.unannotatedType(typeT.getUnderlyingType()),
                         typeU,
                         result,
                         constraint,

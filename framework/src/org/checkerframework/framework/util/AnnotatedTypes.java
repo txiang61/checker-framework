@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +55,6 @@ import org.checkerframework.framework.type.SyntheticArrays;
 import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.ErrorReporter;
-import org.checkerframework.javacutil.InternalUtils;
 import org.checkerframework.javacutil.Pair;
 import org.checkerframework.javacutil.TypesUtils;
 
@@ -68,19 +66,6 @@ public class AnnotatedTypes {
     // Class cannot be instantiated.
     private AnnotatedTypes() {
         throw new AssertionError("Class AnnotatedTypes cannot be instantiated.");
-    }
-
-    /**
-     * @deprecated Use {@link #asSuper(AnnotatedTypeFactory, AnnotatedTypeMirror,
-     *     AnnotatedTypeMirror)}
-     */
-    @Deprecated
-    public static AnnotatedTypeMirror asSuper(
-            Types types,
-            AnnotatedTypeFactory atypeFactory,
-            AnnotatedTypeMirror type,
-            AnnotatedTypeMirror superType) {
-        return asSuper(atypeFactory, type, superType);
     }
 
     private static AsSuperVisitor asSuperVisitor;
@@ -186,7 +171,8 @@ public class AnnotatedTypes {
                 // TODO: https://github.com/typetools/checker-framework/issues/724
                 // testcase javacheck -processor nullness  src/java/util/AbstractMap.java
                 //                SourceChecker checker =  atypeFactory.getContext().getChecker();
-                //                String msg = (String.format("OuterAsSuper did not find outer class. type: %s superType: %s", type, superType));
+                //                String msg = (String.format("OuterAsSuper did not find outer
+                // class. type: %s superType: %s", type, superType));
                 //                checker.message(Kind.WARNING, msg);
                 return superType;
             }
@@ -260,7 +246,8 @@ public class AnnotatedTypes {
 
         switch (of.getKind()) {
             case ARRAY:
-                // Method references like String[]::clone should have a return type of String[] rather than Object
+                // Method references like String[]::clone should have a return type of String[]
+                // rather than Object
                 if (SyntheticArrays.isArrayClone(of, member)) {
                     return SyntheticArrays.replaceReturnType(member, (AnnotatedArrayType) of);
                 }
@@ -293,8 +280,8 @@ public class AnnotatedTypes {
 
         // Basic Algorithm:
         // 1. Find the enclosingClassOfMember of the element
-        // 2. Find the base type of enclosingClassOfMember (e.g. type of enclosingClassOfMember as supertype
-        //      of passed type)
+        // 2. Find the base type of enclosingClassOfMember (e.g. type of enclosingClassOfMember as
+        //      supertype of passed type)
         // 3. Substitute for type variables if any exist
         TypeElement enclosingClassOfMember = ElementUtils.enclosingClass(member);
         final Map<TypeVariable, AnnotatedTypeMirror> mappings = new HashMap<>();
@@ -454,7 +441,7 @@ public class AnnotatedTypes {
             }
         }
 
-        return Collections.<AnnotatedDeclaredType>unmodifiableSet(supertypes);
+        return Collections.unmodifiableSet(supertypes);
     }
 
     /**
@@ -506,10 +493,7 @@ public class AnnotatedTypes {
             }
         }
 
-        return Collections
-                .<
-                        /*@NonNull*/ AnnotatedDeclaredType, /*@NonNull*/ ExecutableElement>
-                        unmodifiableMap(overrides);
+        return Collections.unmodifiableMap(overrides);
     }
 
     /**
@@ -535,8 +519,6 @@ public class AnnotatedTypes {
             final ExpressionTree expr,
             final ExecutableElement elt,
             final AnnotatedExecutableType preType) {
-        //TODO: TEMPORARY KLUDGE
-        atypeFactory.getTypeArgumentInference().adaptMethodType(atypeFactory, expr, preType);
 
         // Is the method a generic method?
         if (elt.getTypeParameters().isEmpty()) {
@@ -551,6 +533,7 @@ public class AnnotatedTypes {
         } else if (expr instanceof MemberReferenceTree) {
             targs = ((MemberReferenceTree) expr).getTypeArguments();
             if (targs == null) {
+                // TODO: Add type argument inference as part of fix for #979
                 return new HashMap<>();
             }
         } else {
@@ -568,8 +551,8 @@ public class AnnotatedTypes {
                 AnnotatedTypeVariable typeVar = tvars.get(i);
                 AnnotatedTypeMirror typeArg =
                         atypeFactory.getAnnotatedTypeFromTypeTree(targs.get(i));
-                // TODO: the call to getTypeParameterDeclaration shouldn't be necessary - typeVar already
-                // should be a declaration.
+                // TODO: the call to getTypeParameterDeclaration shouldn't be necessary - typeVar
+                // already should be a declaration.
                 typeArguments.put(typeVar.getUnderlyingType(), typeArg);
             }
             return typeArguments;
@@ -578,18 +561,6 @@ public class AnnotatedTypes {
                     .getTypeArgumentInference()
                     .inferTypeArgs(atypeFactory, expr, elt, preType);
         }
-    }
-    /**
-     * @deprecated Use {@link #leastUpperBound(AnnotatedTypeFactory, AnnotatedTypeMirror,
-     *     AnnotatedTypeMirror)}
-     */
-    @Deprecated
-    public static AnnotatedTypeMirror leastUpperBound(
-            ProcessingEnvironment processingEnv,
-            AnnotatedTypeFactory atypeFactory,
-            AnnotatedTypeMirror type1,
-            AnnotatedTypeMirror type2) {
-        return leastUpperBound(atypeFactory, type1, type2);
     }
 
     /**
@@ -605,10 +576,10 @@ public class AnnotatedTypes {
             AnnotatedTypeMirror type1,
             AnnotatedTypeMirror type2) {
         TypeMirror lub =
-                InternalUtils.leastUpperBound(
-                        atypeFactory.getProcessingEnv(),
+                TypesUtils.leastUpperBound(
                         type1.getUnderlyingType(),
-                        type2.getUnderlyingType());
+                        type2.getUnderlyingType(),
+                        atypeFactory.getProcessingEnv());
         return leastUpperBound(atypeFactory, type1, type2, lub);
     }
 
@@ -686,7 +657,11 @@ public class AnnotatedTypes {
             // Check if one sent an element or an array
             AnnotatedTypeMirror lastArg = args.get(args.size() - 1);
             if (lastArg.getKind() == TypeKind.ARRAY
-                    && getArrayDepth(varargs) == getArrayDepth((AnnotatedArrayType) lastArg)) {
+                    && (getArrayDepth(varargs) == getArrayDepth((AnnotatedArrayType) lastArg)
+                            // If the array depths don't match, but the component type of the vararg
+                            // is a type variable, then that type variable might later be
+                            // substituted for an array.
+                            || varargs.getComponentType().getKind() == TypeKind.TYPEVAR)) {
                 return parameters;
             }
         }
@@ -751,10 +726,7 @@ public class AnnotatedTypes {
         try {
             for (int i = 0; i < trees.size(); ++i) {
                 AnnotatedTypeMirror param = paramTypes.get(i);
-                atypeFactory
-                        .getVisitorState()
-                        .setAssignmentContext(
-                                Pair.<Tree, AnnotatedTypeMirror>of((Tree) null, param));
+                atypeFactory.getVisitorState().setAssignmentContext(Pair.of((Tree) null, param));
                 ExpressionTree arg = trees.get(i);
                 types.add(atypeFactory.getAnnotatedType(arg));
             }
@@ -762,11 +734,6 @@ public class AnnotatedTypes {
             atypeFactory.getVisitorState().setAssignmentContext(preAssCtxt);
         }
         return types;
-    }
-
-    // TODO: can't we do better than comparing the strings?
-    public static boolean areSame(AnnotatedTypeMirror t1, AnnotatedTypeMirror t2) {
-        return t1.toString().equals(t2.toString());
     }
 
     /**
@@ -804,7 +771,7 @@ public class AnnotatedTypes {
      * @return whether the type contains the modifier
      */
     public static boolean containsModifier(AnnotatedTypeMirror type, AnnotationMirror modifier) {
-        return containsModifierImpl(type, modifier, new LinkedList<AnnotatedTypeMirror>());
+        return containsModifierImpl(type, modifier, new ArrayList<AnnotatedTypeMirror>());
     }
 
     /*
@@ -860,7 +827,8 @@ public class AnnotatedTypes {
             return isTypeAnnotationCache.get(elem);
         }
 
-        // the annotation is a type annotation if it has the proper ElementTypes in the @Target meta-annotation
+        // the annotation is a type annotation if it has the proper ElementTypes in the @Target
+        // meta-annotation
         boolean result =
                 hasTypeQualifierElementTypes(elem.getAnnotation(Target.class).value(), cls);
         isTypeAnnotationCache.put(elem, result);
@@ -918,8 +886,7 @@ public class AnnotatedTypes {
      */
     public static boolean isValidType(
             QualifierHierarchy qualifierHierarchy, AnnotatedTypeMirror type) {
-        boolean res =
-                isValidType(qualifierHierarchy, type, Collections.<AnnotatedTypeMirror>emptySet());
+        boolean res = isValidType(qualifierHierarchy, type, Collections.emptySet());
         return res;
     }
 

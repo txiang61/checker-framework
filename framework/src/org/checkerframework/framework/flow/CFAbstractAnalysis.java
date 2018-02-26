@@ -15,6 +15,7 @@ import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedWildcard
 import org.checkerframework.framework.type.GenericAnnotatedTypeFactory;
 import org.checkerframework.framework.type.QualifierHierarchy;
 import org.checkerframework.framework.type.TypeHierarchy;
+import org.checkerframework.framework.util.dependenttypes.DependentTypesHelper;
 import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.Pair;
 
@@ -32,9 +33,6 @@ import org.checkerframework.checker.nullness.qual.*;
  * <p>The purpose of this class is twofold: Firstly, it serves as factory for abstract values,
  * stores and the transfer function. Furthermore, it makes it easy for the transfer function and the
  * stores to access the {@link AnnotatedTypeFactory}, the qualifier hierarchy, etc.
- *
- * @author Charlie Garrett
- * @author Stefan Heule
  */
 public abstract class CFAbstractAnalysis<
                 V extends CFAbstractValue<V>,
@@ -46,6 +44,11 @@ public abstract class CFAbstractAnalysis<
 
     /** The type hierarchy. */
     protected final TypeHierarchy typeHierarchy;
+
+    /**
+     * The dependent type helper used to standardize annotations belonging to the type hierarchy.
+     */
+    protected final DependentTypesHelper dependentTypesHelper;
 
     /** A type factory that can provide static type annotations for AST Trees. */
     protected final GenericAnnotatedTypeFactory<V, S, T, ? extends CFAbstractAnalysis<V, S, T>>
@@ -68,6 +71,7 @@ public abstract class CFAbstractAnalysis<
         super(checker.getProcessingEnvironment(), null, maxCountBeforeWidening);
         qualifierHierarchy = factory.getQualifierHierarchy();
         typeHierarchy = factory.getTypeHierarchy();
+        dependentTypesHelper = factory.getDependentTypesHelper();
         this.atypeFactory = factory;
         this.checker = checker;
         this.transferFunction = createTransferFunction();
@@ -82,9 +86,7 @@ public abstract class CFAbstractAnalysis<
                 checker,
                 factory,
                 fieldValues,
-                // 10 is just a nice low default value. Type systems may wish to use or compute a
-                // different value.
-                factory.getQualifierHierarchy().implementsWidening() ? 10 : -1);
+                factory.getQualifierHierarchy().numberOfIterationsBeforeWidening());
     }
 
     public List<Pair<VariableElement, V>> getFieldValues() {
@@ -167,6 +169,7 @@ public abstract class CFAbstractAnalysis<
     }
 
     /** @see GenericAnnotatedTypeFactory#getTypeFactoryOfSubchecker(Class) */
+    @SuppressWarnings("TypeParameterUnusedInFormals") // Intentional abuse
     public <W extends GenericAnnotatedTypeFactory<?, ?, ?, ?>, U extends BaseTypeChecker>
             W getTypeFactoryOfSubchecker(Class<U> checkerClass) {
         return atypeFactory.getTypeFactoryOfSubchecker(checkerClass);

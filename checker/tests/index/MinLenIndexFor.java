@@ -1,6 +1,6 @@
 import org.checkerframework.checker.index.qual.IndexFor;
 import org.checkerframework.checker.index.qual.IndexOrHigh;
-import org.checkerframework.checker.index.qual.MinLen;
+import org.checkerframework.common.value.qual.MinLen;
 
 public class MinLenIndexFor {
     int @MinLen(2) [] arrayLen2 = {0, 1, 2};
@@ -13,9 +13,9 @@ public class MinLenIndexFor {
     void callTest(int x) {
         test(0);
         test(1);
-        //:: error: (argument.type.incompatible)
+        // :: error: (argument.type.incompatible)
         test(2);
-        //:: error: (argument.type.incompatible)
+        // :: error: (argument.type.incompatible)
         test(3);
         test(arrayLen2.length - 1);
     }
@@ -34,7 +34,7 @@ public class MinLenIndexFor {
         test2(1);
         test2(2);
         test2(4);
-        //:: error: (argument.type.incompatible)
+        // :: error: (argument.type.incompatible)
         test2(5);
         test2(arrayLen4.length);
     }

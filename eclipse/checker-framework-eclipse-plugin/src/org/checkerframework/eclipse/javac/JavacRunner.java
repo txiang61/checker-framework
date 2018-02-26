@@ -27,8 +27,6 @@ import org.osgi.framework.Bundle;
 /**
  * This class is used to run the checker from the Sun Compiler API rather than using the
  * commandline.
- *
- * @author asumu
  */
 public class JavacRunner implements CheckersRunner {
     public static final String CHECKERS_JAR_LOCATION = "lib/checkers.jar";
@@ -186,7 +184,7 @@ public class JavacRunner implements CheckersRunner {
         for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics) {
             if (diagnostic.getSource() != null) {
                 javacErrors.add(new JavacError(diagnostic));
-            } else { //TODO: TEST PRINTING THIS TO THE CONSOLE
+            } else { // TODO: TEST PRINTING THIS TO THE CONSOLE
                 System.out.println(
                         "No source for diagnostic at: "
                                 + diagnostic.getLineNumber()

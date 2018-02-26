@@ -21,9 +21,8 @@ import org.checkerframework.framework.type.treeannotator.ListTreeAnnotator;
 import org.checkerframework.framework.type.treeannotator.TreeAnnotator;
 import org.checkerframework.framework.type.typeannotator.ListTypeAnnotator;
 import org.checkerframework.framework.type.typeannotator.TypeAnnotator;
-import org.checkerframework.javacutil.AnnotationUtils;
+import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.ElementUtils;
-import org.checkerframework.javacutil.InternalUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
 /**
@@ -56,11 +55,11 @@ public class InterningAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
      */
     public InterningAnnotatedTypeFactory(BaseTypeChecker checker) {
         super(checker);
-        this.INTERNED = AnnotationUtils.fromClass(elements, Interned.class);
-        this.TOP = AnnotationUtils.fromClass(elements, UnknownInterned.class);
+        this.INTERNED = AnnotationBuilder.fromClass(elements, Interned.class);
+        this.TOP = AnnotationBuilder.fromClass(elements, UnknownInterned.class);
 
-        // If you update the following, also update ../../../../../docs/manual/interning-checker.tex .
-        addAliasedAnnotation(com.sun.istack.internal.Interned.class, INTERNED);
+        // If you update the following, also update ../../../../../docs/manual/interning-checker.tex
+        addAliasedAnnotation("com.sun.istack.internal.Interned", INTERNED);
 
         this.postInit();
     }
@@ -77,7 +76,7 @@ public class InterningAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
     @Override
     public void addComputedTypeAnnotations(Tree tree, AnnotatedTypeMirror type, boolean useFlow) {
-        Element element = InternalUtils.symbol(tree);
+        Element element = TreeUtils.elementFromTree(tree);
         if (!type.isAnnotatedInHierarchy(INTERNED) && ElementUtils.isCompileTimeConstant(element)) {
             type.addAnnotation(INTERNED);
         }
@@ -124,7 +123,7 @@ public class InterningAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
         }
     }
 
-    /** Adds @Interned to enum types and any use of a class that is declared to be @Interned */
+    /** Adds @Interned to enum types and any use of a class that is declared to be @Interned. */
     private class InterningTypeAnnotator extends TypeAnnotator {
 
         InterningTypeAnnotator(InterningAnnotatedTypeFactory atypeFactory) {
@@ -140,12 +139,11 @@ public class InterningAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
             if (elt.getKind() == ElementKind.ENUM) {
                 t.replaceAnnotation(INTERNED);
 
-                //TODO: CODE REVIEW:
-                //TODO: I am not sure this makes sense.  An element for a declared type doesn't always have
-                //TODO: to be a class declaration.  AND I would assume if the class declaration has
-                //TODO: @Interned then the type would already receive an @Interned from the framework without
-                //TODO: this case (I think from InheritFromClass)
-                //TODO: IF this is true, perhaps remove item 6 I added to the class comment
+                // TODO: CODE REVIEW:  I am not sure this makes sense.  An element for a declared
+                // type doesn't always have to be a class declaration.  AND I would assume if the
+                // class declaration has @Interned then the type would already receive an @Interned
+                // from the framework without this case (I think from InheritFromClass) IF this is
+                // true, perhaps remove item 6 I added to the class comment.
             } else if (typeFactory.fromElement(elt).hasAnnotation(INTERNED)) {
                 // If the class/interface has an @Interned annotation, use it.
                 t.replaceAnnotation(INTERNED);
@@ -156,8 +154,8 @@ public class InterningAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     }
 
     /**
-     * Unbox type and replace any interning type annotations with @Interned since all all primitives
-     * can safely use ==. See case 4 in the class comments.
+     * Unbox type and replace any interning type annotations with @Interned since all primitives can
+     * safely use ==. See case 4 in the class comments.
      */
     @Override
     public AnnotatedPrimitiveType getUnboxedType(AnnotatedDeclaredType type) {

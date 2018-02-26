@@ -475,7 +475,7 @@ import org.checkerframework.checker.index.qual.*;
      * @param  off   Offset from which to start taking bytes
      * @param  len   Number of bytes to write
      */
-    public void write(byte buf[], @IndexFor("#1") int off, @IndexOrHigh("#1") int len) {
+    public void write(byte buf[], @IndexOrHigh("#1") int off, @IndexOrHigh("#1") int len) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -1101,7 +1101,7 @@ import org.checkerframework.checker.index.qual.*;
      *
      * @since  1.5
      */
-    public PrintStream append(CharSequence csq, int start, int end) {
+    public PrintStream append(CharSequence csq, @IndexOrHigh("#1") int start, @IndexOrHigh("#1") int end) {
         CharSequence cs = (csq == null ? "null" : csq);
         write(cs.subSequence(start, end).toString());
         return this;

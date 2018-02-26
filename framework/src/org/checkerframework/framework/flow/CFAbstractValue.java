@@ -25,7 +25,6 @@ import org.checkerframework.framework.type.QualifierHierarchy;
 import org.checkerframework.framework.util.AnnotatedTypes;
 import org.checkerframework.framework.util.PluginUtil;
 import org.checkerframework.javacutil.AnnotationUtils;
-import org.checkerframework.javacutil.InternalUtils;
 import org.checkerframework.javacutil.TypesUtils;
 
 /**
@@ -51,8 +50,6 @@ import org.checkerframework.javacutil.TypesUtils;
  * upper bound is ever used. So, the set of annotations represents the primary annotation on the
  * wildcard's upper bound. If that upper bound is a type variable, then the set of annotations could
  * be missing an annotation in a hierarchy.
- *
- * @author Stefan Heule
  */
 public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements AbstractValue<V> {
 
@@ -197,10 +194,10 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
         } else if (types.isAssignable(other.getUnderlyingType(), this.getUnderlyingType())) {
             mostSpecifTypeMirror = other.getUnderlyingType();
         } else if (TypesUtils.isErasedSubtype(
-                types, this.getUnderlyingType(), other.getUnderlyingType())) {
+                this.getUnderlyingType(), other.getUnderlyingType(), types)) {
             mostSpecifTypeMirror = this.getUnderlyingType();
         } else if (TypesUtils.isErasedSubtype(
-                types, other.getUnderlyingType(), this.getUnderlyingType())) {
+                other.getUnderlyingType(), this.getUnderlyingType(), types)) {
             mostSpecifTypeMirror = other.getUnderlyingType();
         } else {
             mostSpecifTypeMirror = this.getUnderlyingType();
@@ -253,7 +250,7 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
 
         private AnnotationMirror getBackUpAnnoIn(AnnotationMirror top) {
             if (backupSet == null) {
-                // If there is no back up value, but on is required then the resulting set will
+                // If there is no back up value, but one is required then the resulting set will
                 // not be the most specific.  Indicate this with the error.
                 error = true;
                 return null;
@@ -334,8 +331,8 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
         ProcessingEnvironment processingEnv = analysis.getTypeFactory().getProcessingEnv();
         Set<AnnotationMirror> lub = AnnotationUtils.createAnnotationSet();
         TypeMirror lubTypeMirror =
-                InternalUtils.leastUpperBound(
-                        processingEnv, this.getUnderlyingType(), other.getUnderlyingType());
+                TypesUtils.leastUpperBound(
+                        this.getUnderlyingType(), other.getUnderlyingType(), processingEnv);
 
         LubVisitor lubVisitor =
                 new LubVisitor(
@@ -370,7 +367,7 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
         private AnnotationMirror computeUpperBound(AnnotationMirror a, AnnotationMirror b) {
             QualifierHierarchy hierarchy = analysis.getTypeFactory().getQualifierHierarchy();
             if (widen) {
-                return hierarchy.widenUpperBound(a, b);
+                return hierarchy.widenedUpperBound(a, b);
             } else {
                 return hierarchy.leastUpperBound(a, b);
             }

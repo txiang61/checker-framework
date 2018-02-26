@@ -27,7 +27,6 @@ import org.checkerframework.dataflow.qual.Pure;
  *
  * @see Format
  * @checker_framework.manual #formatter-checker Format String Checker
- * @author Konstantin Weitz
  */
 public enum ConversionCategory {
     /** Use if the parameter can be of any type. Applicable for conversions b, B, h, H, s, S. */
@@ -41,7 +40,7 @@ public enum ConversionCategory {
     CHAR(new Class<?>[] {Character.class, Byte.class, Short.class, Integer.class}, "cC"),
 
     /**
-     * Use if the parameter is is an integral type: byte, Byte, short, Short, int and Integer, long,
+     * Use if the parameter is an integral type: byte, Byte, short, Short, int and Integer, long,
      * Long, and BigInteger. Applicable for conversions d, o, x, X.
      */
     INT(
@@ -49,13 +48,13 @@ public enum ConversionCategory {
             "doxX"),
 
     /**
-     * Use if the parameter is is a floating-point type: float, Float, double, Double, and
-     * BigDecimal. Applicable for conversions e, E, f, g, G, a, A.
+     * Use if the parameter is a floating-point type: float, Float, double, Double, and BigDecimal.
+     * Applicable for conversions e, E, f, g, G, a, A.
      */
     FLOAT(new Class<?>[] {Float.class, Double.class, BigDecimal.class}, "eEfgGaA"),
 
     /**
-     * Use if the parameter is is a type which is capable of encoding a date or time: long, Long,
+     * Use if the parameter is a type which is capable of encoding a date or time: long, Long,
      * Calendar, and Date. Applicable for conversions t, T.
      */
     TIME(new Class<?>[] {Long.class, Calendar.class, Date.class}, "tT"),
@@ -112,7 +111,9 @@ public enum ConversionCategory {
         this.chars = chars;
     }
 
+    @SuppressWarnings("ImmutableEnumChecker") // TODO: clean this up!
     public final Class<? extends Object>[] types;
+
     public final String chars;
 
     /**

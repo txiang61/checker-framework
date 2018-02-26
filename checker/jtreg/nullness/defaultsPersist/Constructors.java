@@ -6,7 +6,11 @@
  * @run main Driver Constructors
  */
 
-import static com.sun.tools.classfile.TypeAnnotation.TargetType.*;
+import static com.sun.tools.classfile.TypeAnnotation.TargetType.METHOD_FORMAL_PARAMETER;
+import static com.sun.tools.classfile.TypeAnnotation.TargetType.METHOD_RECEIVER;
+import static com.sun.tools.classfile.TypeAnnotation.TargetType.METHOD_TYPE_PARAMETER;
+import static com.sun.tools.classfile.TypeAnnotation.TargetType.METHOD_TYPE_PARAMETER_BOUND;
+import static com.sun.tools.classfile.TypeAnnotation.TargetType.THROWS;
 
 public class Constructors {
 
@@ -33,9 +37,12 @@ public class Constructors {
 
     @TADescriptions({
         // Should there be defaults?
-        // @TADescription(annotation = "org/checkerframework/checker/nullness/qual/NonNull", type = METHOD_RETURN),
-        // @TADescription(annotation = "org/checkerframework/checker/initialization/qual/Initialized", type = METHOD_RETURN),
-        // @TADescription(annotation = "org/checkerframework/checker/nullness/qual/UnknownKeyFor", type = METHOD_RETURN),
+        // @TADescription(annotation = "org/checkerframework/checker/nullness/qual/NonNull",
+        //     type = METHOD_RETURN),
+        // @TADescription(annotation =
+        //    "org/checkerframework/checker/initialization/qual/Initialized", type = METHOD_RETURN),
+        // @TADescription(annotation = "org/checkerframework/checker/nullness/qual/UnknownKeyFor",
+        //     type = METHOD_RETURN),
     })
     public String retDefault1() {
         return "Test() { }";

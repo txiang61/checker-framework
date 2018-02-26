@@ -1,5 +1,3 @@
-// @skip-test
-
 // Test case for Issue 804:
 // https://github.com/typetools/checker-framework/issues/804
 
@@ -17,7 +15,7 @@ public class Issue804 extends ReentrantLock {
     @MayReleaseLocks
     void method() {
         bar();
-        //:: error: (contracts.precondition.not.satisfied)
+        // :: error: (contracts.precondition.not.satisfied)
         bar();
     }
 }

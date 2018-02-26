@@ -211,7 +211,7 @@ public class Object {
      *               be cloned.
      * @see java.lang.Cloneable
      */
-    protected native Object clone() throws CloneNotSupportedException;
+    protected native Object clone(Object this) throws CloneNotSupportedException;
 
     /**
      * Returns a string representation of the object. In general, the

@@ -1,12 +1,8 @@
 package org.checkerframework.eclipse.prefs;
 
-/**
- * This class keeps static information about preferences for the checker plugin
- *
- * @author asumu
- */
+/** This class keeps static information about preferences for the checker plugin */
 public final class CheckerPreferences {
-    //TODO: SHORTEN THESE AND CREATE BETTER NAMES
+    // TODO: SHORTEN THESE AND CREATE BETTER NAMES
 
     /** A key for determining if individual class prefs should be checked */
     public static final String PREF_CHECKER_PREFS_SET = "checker_prefs";

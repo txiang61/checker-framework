@@ -10,7 +10,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 // Subclasses of this abstract class may opt to prohibit null keys and/or values.
 public abstract class AbstractMap<K extends @Nullable Object, V extends @Nullable Object> implements Map<K, V> {
   protected AbstractMap() {}
-  public class SimpleEntry<K extends @Nullable Object, V extends @Nullable Object>
+  public static class SimpleEntry<K extends @Nullable Object, V extends @Nullable Object>
       implements Map.Entry<K, V>, java.io.Serializable {
     private static final long serialVersionUID = 0;
     public SimpleEntry(K a1, V a2) { throw new RuntimeException("skeleton method"); }
@@ -22,7 +22,7 @@ public abstract class AbstractMap<K extends @Nullable Object, V extends @Nullabl
     @Pure public int hashCode() { throw new RuntimeException("skeleton method"); }
     @SideEffectFree public String toString() { throw new RuntimeException("skeleton method"); }
   }
-  public class SimpleImmutableEntry<K extends @Nullable Object, V extends @Nullable Object>
+  public static class SimpleImmutableEntry<K extends @Nullable Object, V extends @Nullable Object>
       implements Map.Entry<K, V>, java.io.Serializable {
     private static final long serialVersionUID = 0;
     public SimpleImmutableEntry(K a1, V a2) { throw new RuntimeException("skeleton method"); }

@@ -1,6 +1,9 @@
+// The test cases GenericNull, FieldAccess, and InferTypeArgs often fail together.
+// See the comments at GenericNull for some tips about what might be wrong.
 
 public class FieldAccess {
     class MyClass {
+
         Object field = new Object();
     }
 
@@ -28,5 +31,10 @@ public class FieldAccess {
             // Union type field access
             ex.field = new Object();
         }
+    }
+
+    void classLiterals() {
+        Class<?> c = byte.class;
+        Class<?> d = void.class;
     }
 }

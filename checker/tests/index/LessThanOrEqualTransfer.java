@@ -1,4 +1,4 @@
-import org.checkerframework.checker.index.qual.MinLen;
+import org.checkerframework.common.value.qual.MinLen;
 
 class LessThanOrEqualTransfer {
     void lte_check(int[] a) {
@@ -9,7 +9,7 @@ class LessThanOrEqualTransfer {
 
     void lte_bad_check(int[] a) {
         if (1 <= a.length) {
-            //:: error: (assignment.type.incompatible)
+            // :: error: (assignment.type.incompatible)
             int @MinLen(2) [] b = a;
         }
     }

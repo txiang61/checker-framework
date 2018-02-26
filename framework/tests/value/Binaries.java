@@ -17,6 +17,42 @@ class Binaries {
 
     void write(int t) {}
 
+    // Test widenedUpperBound is working.
+    public void loop(int c) {
+        double v = 0;
+        int decexp = 0;
+        int seendot = 0;
+        while (true) {
+            if (c == '.' && seendot == 0) seendot = 1;
+            else if ('0' <= c && c <= '9') {
+                v = v * 10 + (c - '0');
+                decexp += seendot;
+            } else break;
+        }
+    }
+
+    public void testIntRange(
+            @IntVal({1, 2}) int values,
+            @IntRange(from = 3, to = 4) int range1,
+            @IntRange(from = 5, to = 20) int range2,
+            @BottomVal int bottom,
+            @UnknownVal int top) {
+
+        /* IntRange + IntRange */
+        @IntRange(from = 8, to = 24) int a = range1 + range2;
+
+        /* IntRange * IntVal */
+        @IntRange(from = 3, to = 8) int b = values * range1;
+
+        /* IntRange * BottomVal */
+        int c = range1 * bottom;
+
+        /* IntRange * UnknownVal */
+        @IntRange(from = 0)
+        // :: error: (assignment.type.incompatible)
+        int d = range1 + top;
+    }
+
     public void add() {
         int a = 1;
         if (true) {
@@ -141,7 +177,7 @@ class Binaries {
         if (flag) {
             a = false;
         }
-        //:: error: (assignment.type.incompatible)
+        // :: error: (assignment.type.incompatible)
         @BoolVal({true}) boolean b = a & true;
 
         int c = 4;
@@ -164,8 +200,8 @@ class Binaries {
         if (true) {
             a = false;
         }
-        //TODO: we could detect this case
-        //:: error: (assignment.type.incompatible)
+        // TODO: we could detect this case
+        // :: error: (assignment.type.incompatible)
         @BoolVal({true}) boolean b = a | true;
 
         int c = 4;
@@ -187,7 +223,7 @@ class Binaries {
         if (true) {
             a = false;
         }
-        //:: error: (assignment.type.incompatible)
+        // :: error: (assignment.type.incompatible)
         @BoolVal({true}) boolean b = a ^ true;
 
         int c = 4;
@@ -224,7 +260,7 @@ class Binaries {
 
         Character bang = '!';
         // Reference equalitiy is used
-        //:: error: (assignment.type.incompatible)
+        // :: error: (assignment.type.incompatible)
         @BoolVal(false) boolean i = (BANG == bang);
     }
 
@@ -280,8 +316,8 @@ class Binaries {
 
     public void compareWithNull() {
         String s = "1";
-        //TODO
-        //:: error: (assignment.type.incompatible)
+        // TODO
+        // :: error: (assignment.type.incompatible)
         @BoolVal(true) boolean b = (s != null);
     }
 
@@ -299,14 +335,14 @@ class Binaries {
         boolean unknown = flag ? true : false;
         @BoolVal(true) boolean a9 = true || unknown;
         @BoolVal(true) boolean a11 = unknown || true;
-        //:: error: (assignment.type.incompatible)
+        // :: error: (assignment.type.incompatible)
         @BoolVal(false) boolean a12 = unknown || false;
-        //:: error: (assignment.type.incompatible)
+        // :: error: (assignment.type.incompatible)
         @BoolVal(true) boolean a13 = false || unknown;
 
-        //:: error: (assignment.type.incompatible)
+        // :: error: (assignment.type.incompatible)
         @BoolVal(true) boolean a14 = true && unknown;
-        //:: error: (assignment.type.incompatible)
+        // :: error: (assignment.type.incompatible)
         @BoolVal(true) boolean a15 = unknown && true;
         @BoolVal(false) boolean a16 = unknown && false;
         @BoolVal(false) boolean a17 = false && unknown;

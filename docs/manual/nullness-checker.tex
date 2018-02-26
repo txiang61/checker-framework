@@ -306,9 +306,9 @@ the possibility of returning \<null>.
 
 \subsection{Implicit qualifiers\label{nullness-implicit-qualifiers}}
 
-As described in Section~\ref{effective-qualifier}, the Nullness Checker
+The Nullness Checker
 adds implicit qualifiers, reducing the number of annotations that must
-appear in your code.
+appear in your code (see Section~\ref{effective-qualifier}).
 For example, enum types are implicitly non-null, so you never need to write
 \<@NonNull MyEnumType>.
 
@@ -398,7 +398,7 @@ example is already
 done for you in the annotated JDK that comes with the Checker Framework):
 
 \begin{Verbatim}
-  class Class {
+  class Class<T> {
     @EnsuresNonNullIf(expression="getComponentType()", result=true)
     public native boolean isArray();
 
@@ -440,7 +440,7 @@ checker.
 
 To make the Nullness Checker conservatively reject code that may leave a
 non-null value in an array, use the command-line option
-\code{-Alint=forbidnonnullarraycomponents}.  The opiton is currently disabled
+\code{-Alint=forbidnonnullarraycomponents}.  The option is currently disabled
 because it makes the checker issue many false positive errors.
 % TODO: flip the default after collecting more data.
 
@@ -564,7 +564,7 @@ Nullness Checker from reporting this particular warning to you.
 \begin{sloppypar}
 The Checker Framework supplies several ways to suppress warnings, most
 notably the \<@SuppressWarnings("nullness")> annotation (see
-Section~\ref{suppressing-warnings}).  An example use is
+Chapter~\ref{suppressing-warnings}).  An example use is
 \end{sloppypar}
 
 %BEGIN LATEX
@@ -589,9 +589,7 @@ Use of \<@SuppressWarnings("nullness:generic.argument")> causes the Nullness
 Checker to suppress warnings related to misuse of generic type
 arguments.  One use for this key is when a class is declared to take only
 \<@NonNull> type arguments, but you want to instantiate the class with a
-\<@Nullable> type argument, as in \code{List<@Nullable Object>}.  For a more
-complete explanation of this example, see
-Section~\refwithpage{faq-list-map-nonnull-typeargs}.
+\<@Nullable> type argument, as in \code{List<@Nullable Object>}.
 
 The Nullness Checker also permits you to use assertions or method calls to
 suppress warnings; see below.
@@ -863,7 +861,8 @@ exactly as if you had written the corresponding annotation from the
 Nullness Checker, as described in Figure~\ref{fig-nullness-refactoring}.
 
 
-% These lists should be kept in sync with NullnessAnnotatedTypeFactory.java .
+% These lists should be kept in sync with
+% ../../checker/src/org/checkerframework/checker/nullness/NullnessAnnotatedTypeFactory.java
 \begin{figure}
 \begin{center}
 % The ~ around the text makes things look better in Hevea (and not terrible
@@ -883,6 +882,7 @@ Nullness Checker, as described in Figure~\ref{fig-nullness-refactoring}.
  ~org.jetbrains.annotations.NotNull~ \\ \hline
  ~org.jmlspecs.annotation.NonNull~ \\ \hline
  ~org.netbeans.api.annotations.common.NonNull~ \\ \hline
+ ~org.springframework.lang.NonNull~ \\ \hline
 \end{tabular}
 &
 $\Rightarrow$
@@ -897,6 +897,7 @@ $\Rightarrow$
  ~com.sun.istack.internal.Nullable~ \\ \hline
  ~edu.umd.cs.findbugs.annotations.Nullable~ \\ \hline
  ~edu.umd.cs.findbugs.annotations.CheckForNull~ \\ \hline
+ ~edu.umd.cs.findbugs.annotations.PossiblyNull~ \\ \hline
  ~edu.umd.cs.findbugs.annotations.UnknownNullness~ \\ \hline
  ~javax.annotation.Nullable~ \\ \hline
  ~javax.annotation.CheckForNull~ \\ \hline
@@ -907,6 +908,7 @@ $\Rightarrow$
  ~org.netbeans.api.annotations.common.NullAllowed~ \\ \hline
  ~org.netbeans.api.annotations.common.CheckForNull~ \\ \hline
  ~org.netbeans.api.annotations.common.NullUnknown~ \\ \hline
+ ~org.springframework.lang.Nullable~ \\ \hline
 \end{tabular}
 &
 $\Rightarrow$
@@ -976,6 +978,11 @@ issue.
 
 Different tools are appropriate in different circumstances.  Here is a
 brief comparison with FindBugs, but similar points apply to other tools.
+(For example, the \href{https://github.com/uber/NullAway}{NullAway} and
+\href{http://fbinfer.com/docs/eradicate.html}{Eradicate} tools are more
+like sound type-checking than FindBugs, but all of those tools accept
+unsoundness --- that is, false negatives or missed warnings --- in exchange
+for analysis speed.)
 
 The Checker Framework has a more powerful nullness analysis; FindBugs misses
 some real
@@ -1203,6 +1210,8 @@ references to \code{this} that escape the constructor (say, by being stored
 in a field or passed to a method before initialization is complete).
 Use of initialization annotations is rare in most code.
 
+\label{underinitialization-examples}
+
 The most common use for the \<@UnderInitialization> annotation is for a
 helper routine that is called by constructor.  For example:
 
@@ -1223,11 +1232,27 @@ helper routine that is called by constructor.  For example:
       field2 = new Object();
       field3 = new Object();
     }
+
+    public MyClass(String arg1, String arg2, String arg3) {
+      this.field1 = arg1;
+      this.field2 = arg2;
+      this.field3 = arg3;
+      checkRep();
+    }
+
+    // Verify that the representation invariants are satisfied.
+    // Works as long as the MyClass fields are initialized, even if the reciever's
+    // class is a subclass of MyClass and not all of the subclass fields are initialized.
+    private void checkRep(@UnderInitialization(MyClass.class) MyClass this) {
+      ...
+    }
+
+
   }
 \end{Verbatim}
 
-For compatibility with Java 6 and 7, you can write the receiver
-parameter in comments (see Section~\ref{annotations-in-comments}):
+For compatibility with Java 5/6/7, you can write the receiver
+parameter in comments (see Section~\ref{receivers-and-imports-in-comments}):
 \begin{Verbatim}
     private void init_other_fields(/*>>>@UnderInitialization(Object.class) MyClass this*/) {
 \end{Verbatim}
@@ -1235,6 +1260,37 @@ parameter in comments (see Section~\ref{annotations-in-comments}):
 % Most readers can
 % skip this section on first reading; you can return to it once you have
 % mastered the rest of the Nullness Checker.
+
+Note that it would not be sound to type {@code this} as fully {@link Initialized} anywhere in
+a constructor (with the exception of final classes, for which the set
+of all fields is known),
+because there might be subclasses with uninitialized fields. The following example shows why:
+
+\begin{Verbatim}
+class A {
+   @NonNull String a;
+   public A() {
+       a = "";
+       // Now, all fields of A are initialized.
+       // However, if this constructor is invoked as part of 'new B()', then
+       // the fields of B are not yet initialized.
+       // If we would type 'this' as @Initialized, then the following call is valid:
+       foo();
+   }
+   void foo() {}
+}
+
+class B extends A {
+   @NonNull String b;
+   @Override
+   void foo() {
+       // Dereferencing 'b' is ok, since 'this' is @Initialized and 'b' @NonNull.
+       // However, when executing 'new B()', this line throws a null-pointer exception.
+       b.toString();
+   }
+}
+\end{Verbatim}
+
 
 \subsection{Initialization qualifiers\label{initialization-qualifiers}}
 
@@ -1884,6 +1940,15 @@ This can be placed on a single field; on a constructor; or on a class to
 suppress all initialization warnings for all constructors.
 \end{sloppypar}
 
+To disable initialization checking, supply the command-line argument
+\<-AsuppressWarnings=uninitialized>.  Do \emph{not} use
+\<-AsuppressWarnings=initialization>, because doing so will disable all
+nullness checking as well as all initialization checking.  (That is because
+of an implementation detail of the Nullness and Initialization Checkers:
+they are actually the same checker, rather than being two separate checkers
+that are aggregated together.)
+
+
 \paragraph{Checking initialization of all fields, not just \code{@NonNull} ones\label{initialization-checking-all-fields}}
 
 When the \code{-Alint=uninitialized} command-line option is provided, then
@@ -1958,6 +2023,11 @@ a \<@NonNull>
 field may be observed to be null, until that field is set.  In
 particular, the Nullness Checker issues a warning for code like this:
 
+%  import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+%  import org.checkerframework.checker.nullness.qual.NonNull;
+% Declaration of m() needs:
+%   @UnderInitialization(MyClass.class) MyClass this
+% or @UnknownInitialization
 \begin{Verbatim}
   public class MyClass {
     private @NonNull Object f;
@@ -1973,6 +2043,7 @@ particular, the Nullness Checker issues a warning for code like this:
     }
     public MyClass(int x, int y, int z) {
       m();
+      this.f = new Object();
     }
     public void m() {
       // Error because this.f is accessed before f is initialized,
@@ -2018,8 +2089,8 @@ is called by constructor.  For example:
   }
 \end{Verbatim}
 
-For compatibility with Java 6 and 7, you can write the receiver
-parameter in comments (see Section~\ref{annotations-in-comments}):
+For compatibility with Java 5/6/7, you can write the receiver
+parameter in comments (see Section~\ref{receivers-and-imports-in-comments}):
 \begin{Verbatim}
     private void init_other_fields(/*>>> @Raw MyClass this*/) {
 \end{Verbatim}
@@ -2133,11 +2204,11 @@ Within the constructor,
 \code{this} starts out with \refqualclass{checker/nullness/qual}{Raw} type.
 As soon as all of the \refqualclass{checker/nullness/qual}{NonNull} fields
 in class $C$ have been initialized, then \code{this} is treated as
-\refqualclass{checker/initialization/qual}{NonRaw}\code{(\emph{C})}.
+\refqualclass{checker/nullness/qual}{NonRaw}\code{(\emph{C})}.
 This means that \code{this} is still being initialized, but all
 initialization of $C$'s fields is complete, including all fields of supertypes.
 Eventually, when all constructors complete, the type is simply
-\refqualclass{checker/initialization/qual}{NonRaw}.
+\refqualclass{checker/nullness/qual}{NonRaw}.
 
 The Nullness Checker issues an error if the constructor fails to initialize
 any \code{@NonNull} field.  This ensures that the object is in a legal (non-raw)
@@ -2417,7 +2488,7 @@ annotation has nothing to do with the raw types of Java Generics.
 % LocalWords:  Nullability typeargs nulltest EnsuresNonNullIf listFiles faq
 % LocalWords:  isDirectory AssertionError intraprocedurally SuppressWarnings rB
 % LocalWords:  FindBugs's getObject RequiresNonNull EnsuresNonNull KeyFor
-% LocalWords:  nonnull EnsuresNonNull arg orElse isPresent bField
+% LocalWords:  nonnull EnsuresNonNull arg orElse isPresent bField qual ccc
 % LocalWords:  keySet getField keyfor param TypeName containsValue indexOf nraA
 % LocalWords:  lastIndexOf deref getProperty getProperties classliteral MyClass
 % LocalWords:  typeofthis nraB nrbB rO nroO nroB containsKey enum
@@ -2428,6 +2499,6 @@ annotation has nothing to do with the raw types of Java Generics.
 % LocalWords:  isEmpty AssumeAssertion cleanroom varargs OtherClass
 % LocalWords:  NullnessRawnessChecker mymap mykey KeyType ValueType
 % LocalWords:  dereferenced dereference Dereferencing initializers
-% LocalWords:  initHelper helperMethod NoSuchElementException
+% LocalWords:  initHelper helperMethod NoSuchElementException classpath
 % LocalWords:  forbidnonnullarraycomponents lombok
 % LocalWords:  NotOnlyInitialized

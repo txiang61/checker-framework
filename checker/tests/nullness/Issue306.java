@@ -1,9 +1,11 @@
 // Test case for Issue 306:
 // https://github.com/typetools/checker-framework/issues/306
+
+// @skip-test until the issue is fixed
+
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-//@skip-test
 class Issue306 {
     @MonotonicNonNull Object x;
 
@@ -26,20 +28,20 @@ class Issue306 {
         // The following error has to be raised: from
         // the signature it is not guaranteed that
         // the parameter is returned.
-        //:: error: (monotonic.type.incompatible)
+        // :: error: (monotonic.type.incompatible)
         x = check(x);
     }
 
     @MonotonicNonNull Object y;
 
     void realError(@MonotonicNonNull Object p) {
-        //:: error: (monotonic.type.incompatible)
+        // :: error: (monotonic.type.incompatible)
         x = y;
-        //:: error: (monotonic.type.incompatible)
+        // :: error: (monotonic.type.incompatible)
         x = p;
         // It would be nice not to raise the following
         // error.
-        //:: error: (monotonic.type.incompatible)
+        // :: error: (monotonic.type.incompatible)
         x = x;
     }
 }
