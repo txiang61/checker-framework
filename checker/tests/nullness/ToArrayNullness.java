@@ -34,7 +34,7 @@ public class ToArrayNullness {
         for (@NonNull String o : nonnullList.toArray(new @NonNull String[0])) ;
     }
 
-    //:: error: (type.argument.type.incompatible)
+    // :: error: (type.argument.type.incompatible)
     private Collection<@Nullable String> nullableCol = new ArrayList<@Nullable String>();
     private Collection<@NonNull String> nonnullCol = new ArrayList<@NonNull String>();
 
