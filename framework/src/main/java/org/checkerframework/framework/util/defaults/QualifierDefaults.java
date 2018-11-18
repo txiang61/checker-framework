@@ -12,7 +12,6 @@ import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Type.WildcardType;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -898,26 +897,6 @@ public class QualifierDefaults {
             }
         }
 
-        /**
-         * Map between {@link org.checkerframework.framework.qual.TypeKind} and {@link
-         * javax.lang.model.type.TypeKind}.
-         *
-         * @param typeKind the list of Checker Framework TypeKind
-         * @return the javax list of TypeKind
-         */
-        private ArrayList<TypeKind> mapTypeKinds(
-                org.checkerframework.framework.qual.TypeKind[] typeKinds) {
-            ArrayList<TypeKind> lst = new ArrayList<>();
-            for (org.checkerframework.framework.qual.TypeKind type : typeKinds) {
-                if (type.equals(org.checkerframework.framework.qual.TypeKind.ALL)) {
-                    return new ArrayList<TypeKind>(Arrays.asList(TypeKind.values()));
-                }
-                lst.add(TypeKind.valueOf(type.name()));
-            }
-
-            return lst;
-        }
-
         protected class DefaultApplierElementImpl
                 extends AnnotatedTypeScanner<Void, AnnotationMirror> {
 
@@ -927,7 +906,8 @@ public class QualifierDefaults {
                     return super.scan(t, qual);
                 }
 
-                ArrayList<TypeKind> mappedTk = mapTypeKinds(typeKind);
+                List<TypeKind> mappedTk =
+                        org.checkerframework.framework.qual.TypeKind.mapTypeKinds(typeKind);
 
                 switch (location) {
                     case FIELD:

@@ -98,6 +98,37 @@ public enum TypeKind {
     public static TypeKind[] allTypeKinds() {
         List<TypeKind> list = new ArrayList<>(Arrays.asList(values()));
         list.remove(ALL);
-        return (TypeKind[]) list.toArray();
+        return list.toArray(new TypeKind[list.size()]);
+    }
+
+    /**
+     * Map between list of {@link org.checkerframework.framework.qual.TypeKind} and list of {@link
+     * javax.lang.model.type.TypeKind}.
+     *
+     * @param typeKind the list of Checker Framework TypeKind
+     * @return the javax list of TypeKind
+     */
+    public static List<javax.lang.model.type.TypeKind> mapTypeKinds(TypeKind[] typeKinds) {
+        List<javax.lang.model.type.TypeKind> lst = new ArrayList<>();
+        for (TypeKind type : typeKinds) {
+            if (type.equals(ALL)) {
+                return new ArrayList<javax.lang.model.type.TypeKind>(
+                        Arrays.asList(javax.lang.model.type.TypeKind.values()));
+            }
+            lst.add(mapTypeKind(type));
+        }
+
+        return lst;
+    }
+
+    /**
+     * Map between {@link org.checkerframework.framework.qual.TypeKind} and {@link
+     * javax.lang.model.type.TypeKind}.
+     *
+     * @param typeKind the Checker Framework TypeKind
+     * @return the javax TypeKind
+     */
+    public static javax.lang.model.type.TypeKind mapTypeKind(TypeKind typeKind) {
+        return javax.lang.model.type.TypeKind.valueOf(typeKind.name());
     }
 }
