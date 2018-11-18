@@ -14,6 +14,7 @@ import com.sun.tools.javac.code.Type.WildcardType;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -333,14 +334,17 @@ public class QualifierDefaults {
 
     /** Sets the default annotations for a certain Element. */
     public void addElementDefault(
-            Element elem, AnnotationMirror elementDefaultAnno, TypeUseLocation location) {
+            Element elem,
+            AnnotationMirror elementDefaultAnno,
+            TypeUseLocation location,
+            org.checkerframework.framework.qual.TypeKind[] types) {
         DefaultSet prevset = elementDefaults.get(elem);
         if (prevset != null) {
-            checkDuplicates(prevset, elementDefaultAnno, location);
+            checkDuplicates(prevset, elementDefaultAnno, location, types);
         } else {
             prevset = new DefaultSet();
         }
-        prevset.add(new Default(elementDefaultAnno, location));
+        prevset.add(new Default(elementDefaultAnno, location, types));
         elementDefaults.put(elem, prevset);
     }
 
@@ -361,15 +365,6 @@ public class QualifierDefaults {
                             + " -> "
                             + uncheckedDefaultAnno);
         }
-    }
-
-    private void checkDuplicates(
-            DefaultSet previousDefaults, AnnotationMirror newAnno, TypeUseLocation newLoc) {
-        checkDuplicates(
-                previousDefaults,
-                newAnno,
-                newLoc,
-                org.checkerframework.framework.qual.TypeKind.all());
     }
 
     private void checkDuplicates(
@@ -401,14 +396,35 @@ public class QualifierDefaults {
             TypeUseLocation newLoc,
             org.checkerframework.framework.qual.TypeKind[] newTypes) {
         final QualifierHierarchy qualHierarchy = atypeFactory.getQualifierHierarchy();
-
+        Default duplicate = null;
         for (Default previous : previousDefaults) {
+            Set<org.checkerframework.framework.qual.TypeKind> previousTypeSet =
+                    new HashSet<>(Arrays.asList(previous.types));
+            Set<org.checkerframework.framework.qual.TypeKind> newTypeSet =
+                    new HashSet<>(Arrays.asList(newTypes));
             if (!AnnotationUtils.areSame(newAnno, previous.anno) && previous.location == newLoc) {
                 final AnnotationMirror previousTop = qualHierarchy.getTopAnnotation(previous.anno);
                 if (qualHierarchy.isSubtype(newAnno, previousTop)) {
-                    return true;
+                    if (previousTypeSet.containsAll(newTypeSet)
+                            || previousTypeSet.contains(
+                                    org.checkerframework.framework.qual.TypeKind.ALL)) {
+                        return true;
+                    } else if (newTypeSet.contains(
+                            org.checkerframework.framework.qual.TypeKind.ALL)) {
+                    } else {
+                        previousTypeSet.addAll(newTypeSet);
+                        newTypes =
+                                previousTypeSet.toArray(
+                                        new org.checkerframework.framework.qual.TypeKind
+                                                [previousTypeSet.size()]);
+                    }
+                    duplicate = previous;
+                    break;
                 }
             }
+        }
+        if (duplicate != null) {
+            previousDefaults.remove(duplicate);
         }
         return false;
     }
@@ -941,7 +957,7 @@ public class QualifierDefaults {
                             if (scope != null
                                     && scope.getKind() == ElementKind.RESOURCE_VARIABLE
                                     && t == type
-                                    && (mappedTk == null || mappedTk.contains(t.getKind()))) {
+                                    && mappedTk.contains(t.getKind())) {
                                 addAnnotation(t, qual);
                             }
                             break;
