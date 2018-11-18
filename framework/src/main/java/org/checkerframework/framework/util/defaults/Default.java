@@ -16,19 +16,17 @@ public class Default implements Comparable<Default> {
     // please remember to add any fields to the hashcode calculation
     public final AnnotationMirror anno;
     public final TypeUseLocation location;
-    public final TypeKind type;
+    public final TypeKind[] types;
 
     public Default(final AnnotationMirror anno, final TypeUseLocation location) {
-        this.anno = anno;
-        this.location = location;
-        this.type = null;
+        this(anno, location, TypeKind.all());
     }
 
     public Default(
-            final AnnotationMirror anno, final TypeUseLocation location, final TypeKind type) {
+            final AnnotationMirror anno, final TypeUseLocation location, final TypeKind[] types) {
         this.anno = anno;
         this.location = location;
-        this.type = type;
+        this.types = types;
     }
 
     @Override
@@ -58,11 +56,12 @@ public class Default implements Comparable<Default> {
     public int hashCode() {
         return 13
                 + (anno == null ? 0 : 37 * anno.hashCode())
-                + (location == null ? 0 : 41 * location.hashCode());
+                + (location == null ? 0 : 41 * location.hashCode())
+                + (types == null ? 0 : 45 * types.hashCode());
     }
 
     @Override
     public String toString() {
-        return "( " + location.name() + " => " + anno + " )";
+        return "( " + location.name() + " " + types.toString() + " => " + anno + " )";
     }
 }

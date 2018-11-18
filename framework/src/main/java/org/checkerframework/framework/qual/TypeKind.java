@@ -1,5 +1,9 @@
 package org.checkerframework.framework.qual;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Specifies kinds of types.
  *
@@ -71,5 +75,29 @@ public enum TypeKind {
     UNION,
 
     /** Corresponds to {@link javax.lang.model.type.TypeKind#INTERSECTION} types. */
-    INTERSECTION;
+    INTERSECTION,
+
+    /** Corresponds to all types. */
+    ALL;
+
+    /**
+     * Returns a list of TypeKinds containing only ALL
+     *
+     * @return list of TypeKind containing only ALL
+     */
+    public static TypeKind[] all() {
+        TypeKind[] all = {ALL};
+        return all;
+    }
+
+    /**
+     * Returns all TypeKinds except for ALL.
+     *
+     * @return list of TypeKind except for ALL
+     */
+    public static TypeKind[] allTypeKinds() {
+        List<TypeKind> list = new ArrayList<>(Arrays.asList(values()));
+        list.remove(ALL);
+        return (TypeKind[]) list.toArray();
+    }
 }

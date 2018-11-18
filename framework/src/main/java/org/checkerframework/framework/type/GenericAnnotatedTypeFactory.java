@@ -584,9 +584,7 @@ public abstract class GenericAnnotatedTypeFactory<
             DefaultFor defaultFor = qual.getAnnotation(DefaultFor.class);
             if (defaultFor != null) {
                 final TypeUseLocation[] locations = defaultFor.value();
-                final org.checkerframework.framework.qual.TypeKind[] typeKinds = defaultFor.types();
-                defs.addCheckedCodeDefaults(
-                        AnnotationBuilder.fromClass(elements, qual), locations, typeKinds);
+                defs.addCheckedCodeDefaults(AnnotationBuilder.fromClass(elements, qual), locations);
             }
 
             if (qual.getAnnotation(DefaultQualifierInHierarchy.class) != null) {
@@ -634,10 +632,8 @@ public abstract class GenericAnnotatedTypeFactory<
 
             if (defaultInUncheckedCodeFor != null) {
                 final TypeUseLocation[] locations = defaultInUncheckedCodeFor.value();
-                final org.checkerframework.framework.qual.TypeKind[] typeKinds =
-                        defaultInUncheckedCodeFor.types();
                 defs.addUncheckedCodeDefaults(
-                        AnnotationBuilder.fromClass(elements, annotation), locations, typeKinds);
+                        AnnotationBuilder.fromClass(elements, annotation), locations);
             }
 
             if (annotation.getAnnotation(DefaultQualifierInHierarchyInUncheckedCode.class)
