@@ -556,8 +556,8 @@ public class QualifierDefaults {
 
         boolean defaultTypeVarLocals =
                 (atypeFactory instanceof GenericAnnotatedTypeFactory<?, ?, ?, ?>)
-                        && (((GenericAnnotatedTypeFactory<?, ?, ?, ?>) atypeFactory)
-                                .getShouldDefaultTypeVarLocals());
+                        && ((GenericAnnotatedTypeFactory<?, ?, ?, ?>) atypeFactory)
+                                .getShouldDefaultTypeVarLocals();
         applyToTypeVar =
                 defaultTypeVarLocals
                         && elt != null
@@ -833,7 +833,7 @@ public class QualifierDefaults {
             this.scope = scope;
             this.type = type;
             this.impl = new DefaultApplierElementImpl();
-            this.defaultableTypeVar = (applyToTypeVar) ? (AnnotatedTypeVariable) type : null;
+            this.defaultableTypeVar = applyToTypeVar ? (AnnotatedTypeVariable) type : null;
         }
 
         /**
