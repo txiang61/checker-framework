@@ -56,12 +56,11 @@ public class Default implements Comparable<Default> {
     public int hashCode() {
         return 13
                 + (anno == null ? 0 : 37 * anno.hashCode())
-                + (location == null ? 0 : 41 * location.hashCode())
-                + (types == null ? 0 : 45 * types.hashCode());
+                + (location == null ? 0 : 41 * location.hashCode());
     }
 
     @Override
     public String toString() {
-        return "( " + location.name() + " " + types.toString() + " => " + anno + " )";
+        return "( " + location.name() + " => " + anno + " )";
     }
 }

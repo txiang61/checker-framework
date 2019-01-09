@@ -325,9 +325,7 @@ public class QualifierDefaults {
             TypeUseLocation[] locations,
             org.checkerframework.framework.qual.TypeKind[] types) {
         for (TypeUseLocation location : locations) {
-            for (org.checkerframework.framework.qual.TypeKind type : types) {
-                addCheckedCodeDefault(absoluteDefaultAnno, location, types);
-            }
+            addCheckedCodeDefault(absoluteDefaultAnno, location, types);
         }
     }
 
@@ -376,7 +374,7 @@ public class QualifierDefaults {
                     "Only one qualifier from a hierarchy can be the default. Existing: "
                             + previousDefaults
                             + " and new: "
-                            + (new Default(newAnno, newLoc, newTypes)));
+                            + new Default(newAnno, newLoc, newTypes));
         }
     }
 
