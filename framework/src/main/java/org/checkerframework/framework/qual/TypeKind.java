@@ -95,10 +95,10 @@ public enum TypeKind {
      *
      * @return list of TypeKind except for ALL
      */
-    public static TypeKind[] allTypeKinds() {
+    public static List<TypeKind> allTypeKinds() {
         List<TypeKind> list = new ArrayList<>(Arrays.asList(values()));
         list.remove(ALL);
-        return list.toArray(new TypeKind[list.size()]);
+        return list;
     }
 
     /**
@@ -108,7 +108,7 @@ public enum TypeKind {
      * @param typeKinds the list of Checker Framework TypeKind
      * @return the javax list of TypeKind
      */
-    public static List<javax.lang.model.type.TypeKind> mapTypeKinds(TypeKind[] typeKinds) {
+    public static List<javax.lang.model.type.TypeKind> mapTypeKinds(List<TypeKind> typeKinds) {
         List<javax.lang.model.type.TypeKind> lst = new ArrayList<>();
         for (TypeKind type : typeKinds) {
             if (type.equals(ALL)) {

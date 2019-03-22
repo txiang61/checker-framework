@@ -11,8 +11,8 @@ import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Type.WildcardType;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -274,8 +274,14 @@ public class QualifierDefaults {
             AnnotationMirror absoluteDefaultAnno,
             TypeUseLocation location,
             org.checkerframework.framework.qual.TypeKind[] types) {
-        checkDuplicates(checkedCodeDefaults, absoluteDefaultAnno, location, types);
-        checkedCodeDefaults.add(new Default(absoluteDefaultAnno, location, types));
+        List<org.checkerframework.framework.qual.TypeKind> typeLists = new ArrayList<>();
+        if (types[0] == org.checkerframework.framework.qual.TypeKind.ALL) {
+            typeLists = org.checkerframework.framework.qual.TypeKind.allTypeKinds();
+        } else {
+            typeLists.addAll(Arrays.asList(types));
+        }
+        checkDuplicates(checkedCodeDefaults, absoluteDefaultAnno, location, typeLists);
+        checkedCodeDefaults.add(new Default(absoluteDefaultAnno, location, typeLists));
     }
 
     /** Sets the default annotation for unchecked elements at specific location. */
@@ -290,10 +296,16 @@ public class QualifierDefaults {
             AnnotationMirror uncheckedDefaultAnno,
             TypeUseLocation location,
             org.checkerframework.framework.qual.TypeKind[] types) {
-        checkDuplicates(uncheckedCodeDefaults, uncheckedDefaultAnno, location, types);
+        List<org.checkerframework.framework.qual.TypeKind> typeLists = new ArrayList<>();
+        if (types[0] == org.checkerframework.framework.qual.TypeKind.ALL) {
+            typeLists = org.checkerframework.framework.qual.TypeKind.allTypeKinds();
+        } else {
+            typeLists.addAll(Arrays.asList(types));
+        }
+        checkDuplicates(uncheckedCodeDefaults, uncheckedDefaultAnno, location, typeLists);
         checkIsValidUncheckedCodeLocation(uncheckedDefaultAnno, location);
 
-        uncheckedCodeDefaults.add(new Default(uncheckedDefaultAnno, location, types));
+        uncheckedCodeDefaults.add(new Default(uncheckedDefaultAnno, location, typeLists));
     }
 
     /** Sets the default annotation for unchecked elements, with specific locations. */
@@ -339,7 +351,7 @@ public class QualifierDefaults {
                     prevset,
                     elementDefaultAnno,
                     location,
-                    org.checkerframework.framework.qual.TypeKind.all());
+                    org.checkerframework.framework.qual.TypeKind.allTypeKinds());
         } else {
             prevset = new DefaultSet();
         }
@@ -370,7 +382,7 @@ public class QualifierDefaults {
             DefaultSet previousDefaults,
             AnnotationMirror newAnno,
             TypeUseLocation newLoc,
-            org.checkerframework.framework.qual.TypeKind[] newTypes) {
+            List<org.checkerframework.framework.qual.TypeKind> newTypes) {
         if (conflictsWithExistingDefaults(previousDefaults, newAnno, newLoc, newTypes)) {
             throw new BugInCF(
                     "Only one qualifier from a hierarchy can be the default. Existing: "
@@ -386,37 +398,28 @@ public class QualifierDefaults {
                 previousDefaults,
                 newAnno,
                 newLoc,
-                org.checkerframework.framework.qual.TypeKind.all());
+                org.checkerframework.framework.qual.TypeKind.allTypeKinds());
     }
 
     private boolean conflictsWithExistingDefaults(
             DefaultSet previousDefaults,
             AnnotationMirror newAnno,
             TypeUseLocation newLoc,
-            org.checkerframework.framework.qual.TypeKind[] newTypes) {
+            List<org.checkerframework.framework.qual.TypeKind> newTypes) {
         final QualifierHierarchy qualHierarchy = atypeFactory.getQualifierHierarchy();
 
-        Set<org.checkerframework.framework.qual.TypeKind> newTypeSet =
-                new HashSet<>(Arrays.asList(newTypes));
         for (Default previous : previousDefaults) {
-            Set<org.checkerframework.framework.qual.TypeKind> previousTypeSet =
-                    new HashSet<>(Arrays.asList(previous.types));
             if (!AnnotationUtils.areSame(newAnno, previous.anno) && previous.location == newLoc) {
-                if (previousTypeSet.containsAll(newTypeSet)
-                        || previousTypeSet.contains(
+                if (previous.types.containsAll(newTypes)
+                        || previous.types.contains(
                                 org.checkerframework.framework.qual.TypeKind.ALL)) {
                     final AnnotationMirror previousTop =
                             qualHierarchy.getTopAnnotation(previous.anno);
                     if (qualHierarchy.isSubtype(newAnno, previousTop)) {
                         return true;
                     }
-                } else if (newTypeSet.containsAll(previousTypeSet)
-                        || newTypeSet.contains(org.checkerframework.framework.qual.TypeKind.ALL)) {
-                    newTypeSet.removeAll(previousTypeSet);
-                    newTypes =
-                            newTypeSet.toArray(
-                                    new org.checkerframework.framework.qual.TypeKind
-                                            [newTypeSet.size()]);
+                } else if (newTypes.containsAll(previous.types)) {
+                    newTypes.removeAll(previous.types);
                 }
             }
         }
@@ -824,7 +827,7 @@ public class QualifierDefaults {
         /**
          * Type Kind to which to apply the default. (Should only be set by the applyDefault method.)
          */
-        protected org.checkerframework.framework.qual.TypeKind[] typeKinds;
+        protected List<org.checkerframework.framework.qual.TypeKind> typeKinds;
 
         /** The default element applier implementation. */
         protected final DefaultApplierElementImpl impl;

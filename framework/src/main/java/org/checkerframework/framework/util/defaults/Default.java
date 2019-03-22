@@ -1,9 +1,9 @@
 package org.checkerframework.framework.util.defaults;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import org.checkerframework.framework.qual.TypeKind;
 import org.checkerframework.framework.qual.TypeUseLocation;
@@ -20,29 +20,29 @@ public class Default implements Comparable<Default> {
     // please remember to add any fields to the hashcode calculation
     public final AnnotationMirror anno;
     public final TypeUseLocation location;
-    public final TypeKind[] types;
+    public final List<TypeKind> types;
 
     public Default(final AnnotationMirror anno, final TypeUseLocation location) {
-        this(anno, location, TypeKind.all());
+        this(anno, location, new ArrayList<>(Arrays.asList(TypeKind.all())));
     }
 
     public Default(
-            final AnnotationMirror anno, final TypeUseLocation location, final TypeKind[] types) {
+            final AnnotationMirror anno,
+            final TypeUseLocation location,
+            final List<TypeKind> list) {
         this.anno = anno;
         this.location = location;
-        this.types = types;
+        this.types = list;
     }
 
     @Override
     public int compareTo(Default other) {
         int locationOrder = location.compareTo(other.location);
         int typesOrder = 1;
-        Set<TypeKind> thisTypeSet = new HashSet<>(Arrays.asList(types));
-        Set<TypeKind> otherTypeSet = new HashSet<>(Arrays.asList(other.types));
-        if (thisTypeSet.containsAll(otherTypeSet)
-                || thisTypeSet.contains(TypeKind.ALL)
-                || otherTypeSet.containsAll(thisTypeSet)
-                || otherTypeSet.contains(TypeKind.ALL)) {
+        if (types.containsAll(other.types)
+                || types.contains(TypeKind.ALL)
+                || other.types.containsAll(types)
+                || other.types.contains(TypeKind.ALL)) {
             typesOrder = 0;
         }
         if (locationOrder == 0 && typesOrder == 0) {
@@ -72,6 +72,10 @@ public class Default implements Comparable<Default> {
 
     @Override
     public String toString() {
-        return "( " + location.name() + " => " + anno + " )";
+        StringBuilder sb = new StringBuilder("( " + location.name() + " => " + anno + " ): ");
+        for (TypeKind t : types) {
+            sb.append(t.name() + " ");
+        }
+        return sb.toString();
     }
 }
