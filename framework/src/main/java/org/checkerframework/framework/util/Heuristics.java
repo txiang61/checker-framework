@@ -120,10 +120,10 @@ public class Heuristics {
         }
     }
 
-    public static class WithIn extends Matcher {
+    public static class Within extends Matcher {
         private final Matcher matcher;
 
-        public WithIn(Matcher matcher) {
+        public Within(Matcher matcher) {
             this.matcher = matcher;
         }
 
@@ -214,7 +214,7 @@ public class Heuristics {
         }
 
         public static Matcher withIn(Matcher matcher) {
-            return new WithIn(matcher);
+            return new Within(matcher);
         }
 
         public static Matcher whenTrue(Matcher conditionMatcher) {
