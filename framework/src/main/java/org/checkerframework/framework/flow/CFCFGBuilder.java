@@ -117,11 +117,13 @@ public class CFCFGBuilder extends CFGBuilder {
             if (enclosingMethod != null) {
                 Element methodElement = TreeUtils.elementFromDeclaration(enclosingMethod);
                 factory.setEnclosingElementForArtificialTree(tree, methodElement);
+                factory.creatTreePathForArtificialTree(tree, getCurrentPath());
             } else {
                 ClassTree enclosingClass = TreeUtils.enclosingClass(getCurrentPath());
                 if (enclosingClass != null) {
                     Element classElement = TreeUtils.elementFromDeclaration(enclosingClass);
                     factory.setEnclosingElementForArtificialTree(tree, classElement);
+                    factory.creatTreePathForArtificialTree(tree, getCurrentPath());
                 }
             }
         }

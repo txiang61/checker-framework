@@ -2875,6 +2875,10 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
         artificialTreeToEnclosingElementMap.put(node, enclosing);
     }
 
+    public void creatTreePathForArtificialTree(Tree node, TreePath path) {
+        treePathCache.addPath(node, path);
+    }
+
     /**
      * Assert that the type is a type of valid type mirror, i.e. not an ERROR or OTHER type.
      *
