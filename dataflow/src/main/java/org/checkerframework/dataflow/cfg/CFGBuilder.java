@@ -1623,6 +1623,14 @@ public class CFGBuilder {
          */
         public void handleArtificialTree(Tree tree) {}
 
+        /**
+         * Perform any actions required when CFG translation created a Tree that is not part of the
+         * original AST and added the TreePath.
+         *
+         * @param tree the newly created Tree
+         */
+        public void handleArtificialTreeWithPath(Tree tree) {}
+
         /* --------------------------------------------------------- */
         /* Nodes and Labels Management */
         /* --------------------------------------------------------- */
@@ -2793,6 +2801,7 @@ public class CFGBuilder {
                                         tree.getVariable(),
                                         tree.getExpression());
                         handleArtificialTree(operTree);
+                        handleArtificialTreeWithPath(operTree);
                         Node operNode;
                         if (kind == Tree.Kind.MULTIPLY_ASSIGNMENT) {
                             operNode = new NumericalMultiplicationNode(operTree, targetRHS, value);
@@ -2822,6 +2831,7 @@ public class CFGBuilder {
 
                         TypeCastTree castTree = treeBuilder.buildTypeCast(leftType, operTree);
                         handleArtificialTree(castTree);
+                        handleArtificialTreeWithPath(castTree);
                         TypeCastNode castNode =
                                 new TypeCastNode(castTree, operNode, leftType, types);
                         castNode.setInSource(false);
@@ -4636,6 +4646,7 @@ public class CFGBuilder {
                                             findOwner(),
                                             tree.getExpression());
                             handleArtificialTree(tempVarDecl);
+                            handleArtificialTreeWithPath(tempVarDecl);
                             VariableDeclarationNode tempVarDeclNode =
                                     new VariableDeclarationNode(tempVarDecl);
                             tempVarDeclNode.setInSource(false);
@@ -4643,6 +4654,7 @@ public class CFGBuilder {
 
                             Tree tempVar = treeBuilder.buildVariableUse(tempVarDecl);
                             handleArtificialTree(tempVar);
+                            handleArtificialTreeWithPath(tempVar);
                             Node tempVarNode = new LocalVariableNode(tempVar);
                             tempVarNode.setInSource(false);
                             extendWithNode(tempVarNode);
@@ -4654,6 +4666,7 @@ public class CFGBuilder {
 
                             Tree resultExpr = treeBuilder.buildVariableUse(tempVarDecl);
                             handleArtificialTree(resultExpr);
+                            handleArtificialTreeWithPath(resultExpr);
                             result = new LocalVariableNode(resultExpr);
                             result.setInSource(false);
                             extendWithNode(result);
