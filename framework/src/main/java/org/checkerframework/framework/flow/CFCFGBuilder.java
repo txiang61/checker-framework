@@ -128,6 +128,7 @@ public class CFCFGBuilder extends CFGBuilder {
 
         @Override
         public void handleArtificialTreeWithPath(Tree tree) {
+            handleArtificialTree(tree);
             if (factory.getEnclosingElementForArtificialTree(tree) != null) {
                 factory.creatTreePathForArtificialTree(tree, getCurrentPath());
             }

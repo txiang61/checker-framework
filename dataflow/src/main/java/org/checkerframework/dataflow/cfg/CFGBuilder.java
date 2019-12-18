@@ -2800,7 +2800,6 @@ public class CFGBuilder {
                                         withoutAssignment(kind),
                                         tree.getVariable(),
                                         tree.getExpression());
-                        handleArtificialTree(operTree);
                         handleArtificialTreeWithPath(operTree);
                         Node operNode;
                         if (kind == Tree.Kind.MULTIPLY_ASSIGNMENT) {
@@ -2830,7 +2829,6 @@ public class CFGBuilder {
                         extendWithNode(operNode);
 
                         TypeCastTree castTree = treeBuilder.buildTypeCast(leftType, operTree);
-                        handleArtificialTree(castTree);
                         handleArtificialTreeWithPath(castTree);
                         TypeCastNode castNode =
                                 new TypeCastNode(castTree, operNode, leftType, types);
@@ -2871,7 +2869,7 @@ public class CFGBuilder {
                                             withoutAssignment(kind),
                                             tree.getVariable(),
                                             tree.getExpression());
-                            handleArtificialTree(operTree);
+                            handleArtificialTreeWithPath(operTree);
                             Node operNode;
                             if (kind == Tree.Kind.PLUS_ASSIGNMENT) {
                                 operNode = new NumericalAdditionNode(operTree, targetRHS, value);
@@ -2882,7 +2880,7 @@ public class CFGBuilder {
                             extendWithNode(operNode);
 
                             TypeCastTree castTree = treeBuilder.buildTypeCast(leftType, operTree);
-                            handleArtificialTree(castTree);
+                            handleArtificialTreeWithPath(castTree);
                             TypeCastNode castNode =
                                     new TypeCastNode(castTree, operNode, leftType, types);
                             castNode.setInSource(false);
@@ -2916,7 +2914,7 @@ public class CFGBuilder {
                                         withoutAssignment(kind),
                                         tree.getVariable(),
                                         tree.getExpression());
-                        handleArtificialTree(operTree);
+                        handleArtificialTreeWithPath(operTree);
                         Node operNode;
                         if (kind == Tree.Kind.LEFT_SHIFT_ASSIGNMENT) {
                             operNode = new LeftShiftNode(operTree, targetRHS, value);
@@ -2929,7 +2927,7 @@ public class CFGBuilder {
                         extendWithNode(operNode);
 
                         TypeCastTree castTree = treeBuilder.buildTypeCast(leftType, operTree);
-                        handleArtificialTree(castTree);
+                        handleArtificialTreeWithPath(castTree);
                         TypeCastNode castNode =
                                 new TypeCastNode(castTree, operNode, leftType, types);
                         castNode.setInSource(false);
@@ -2970,7 +2968,7 @@ public class CFGBuilder {
                                     withoutAssignment(kind),
                                     tree.getVariable(),
                                     tree.getExpression());
-                    handleArtificialTree(operTree);
+                    handleArtificialTreeWithPath(operTree);
                     Node operNode;
                     if (kind == Tree.Kind.AND_ASSIGNMENT) {
                         operNode = new BitwiseAndNode(operTree, targetRHS, value);
@@ -2983,7 +2981,7 @@ public class CFGBuilder {
                     extendWithNode(operNode);
 
                     TypeCastTree castTree = treeBuilder.buildTypeCast(leftType, operTree);
-                    handleArtificialTree(castTree);
+                    handleArtificialTreeWithPath(castTree);
                     TypeCastNode castNode = new TypeCastNode(castTree, operNode, leftType, types);
                     castNode.setInSource(false);
                     extendWithNode(castNode);
@@ -4645,7 +4643,6 @@ public class CFGBuilder {
                                             uniqueName("tempPostfix"),
                                             findOwner(),
                                             tree.getExpression());
-                            handleArtificialTree(tempVarDecl);
                             handleArtificialTreeWithPath(tempVarDecl);
                             VariableDeclarationNode tempVarDeclNode =
                                     new VariableDeclarationNode(tempVarDecl);
@@ -4653,7 +4650,6 @@ public class CFGBuilder {
                             extendWithNode(tempVarDeclNode);
 
                             Tree tempVar = treeBuilder.buildVariableUse(tempVarDecl);
-                            handleArtificialTree(tempVar);
                             handleArtificialTreeWithPath(tempVar);
                             Node tempVarNode = new LocalVariableNode(tempVar);
                             tempVarNode.setInSource(false);
@@ -4665,7 +4661,6 @@ public class CFGBuilder {
                             extendWithNode(tempAssignNode);
 
                             Tree resultExpr = treeBuilder.buildVariableUse(tempVarDecl);
-                            handleArtificialTree(resultExpr);
                             handleArtificialTreeWithPath(resultExpr);
                             result = new LocalVariableNode(resultExpr);
                             result.setInSource(false);
@@ -4708,7 +4703,7 @@ public class CFGBuilder {
             TypeMirror promotedType = binaryPromotedType(exprType, oneType);
 
             LiteralTree oneTree = treeBuilder.buildLiteral(Integer.valueOf(1));
-            handleArtificialTree(oneTree);
+            handleArtificialTreeWithPath(oneTree);
 
             Node exprRHS = binaryNumericPromotion(expr, promotedType);
             Node one = new IntegerLiteralNode(oneTree);
@@ -4722,7 +4717,7 @@ public class CFGBuilder {
                             isIncrement ? Tree.Kind.PLUS : Tree.Kind.MINUS,
                             exprTree,
                             oneTree);
-            handleArtificialTree(operTree);
+            handleArtificialTreeWithPath(operTree);
 
             Node operNode;
             if (isIncrement) {
@@ -4737,7 +4732,7 @@ public class CFGBuilder {
 
             if (target == null) {
                 target = treeBuilder.buildAssignment(exprTree, (ExpressionTree) narrowed.getTree());
-                handleArtificialTree(target);
+                handleArtificialTreeWithPath(target);
             }
 
             AssignmentNode assignNode = new AssignmentNode(target, expr, narrowed);
