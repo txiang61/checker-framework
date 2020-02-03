@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
-	<classpathentry kind="src" path="/javacutil" exported="true"/>
+	<classpathentry exported="true" kind="src" path="/javacutil"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8/"/>
 	<classpathentry kind="lib" path="/checker/dist/checker-qual.jar" sourcepath="/checker"/>
+	<classpathentry kind="lib" path="/checker/dist/checker.jar"/>
+	<classpathentry kind="lib" path="/checker/dist/javac.jar"/>
+	<classpathentry kind="lib" path="/checker/dist/jdk8.jar"/>
 	<classpathentry kind="output" path="build/classes/java/main"/>
 </classpath>

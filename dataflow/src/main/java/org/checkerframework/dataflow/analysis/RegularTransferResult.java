@@ -1,6 +1,8 @@
 package org.checkerframework.dataflow.analysis;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 import javax.lang.model.type.TypeMirror;
 
@@ -14,7 +16,7 @@ public class RegularTransferResult<A extends AbstractValue<A>, S extends Store<S
         extends TransferResult<A, S> {
 
     /** The regular result store. */
-    protected final S store;
+    protected final Set<S> store;
 
     private final boolean storeChanged;
 
@@ -32,11 +34,11 @@ public class RegularTransferResult<A extends AbstractValue<A>, S extends Store<S
      * class (including use through aliases). Complete control over the object is transfered to this
      * class.
      */
-    public RegularTransferResult(A value, S resultStore, boolean storeChanged) {
+    public RegularTransferResult(A value, Set<S> resultStore, boolean storeChanged) {
         this(value, resultStore, null, storeChanged);
     }
 
-    public RegularTransferResult(A value, S resultStore) {
+    public RegularTransferResult(A value, Set<S> resultStore) {
         this(value, resultStore, false);
     }
 
@@ -60,31 +62,35 @@ public class RegularTransferResult<A extends AbstractValue<A>, S extends Store<S
      * control over the objects is transfered to this class.
      */
     public RegularTransferResult(
-            A value, S resultStore, Map<TypeMirror, S> exceptionalStores, boolean storeChanged) {
+            A value,
+            Set<S> resultStore,
+            Map<TypeMirror, S> exceptionalStores,
+            boolean storeChanged) {
         super(value, exceptionalStores);
         this.store = resultStore;
         this.storeChanged = storeChanged;
     }
 
-    public RegularTransferResult(A value, S resultStore, Map<TypeMirror, S> exceptionalStores) {
+    public RegularTransferResult(
+            A value, Set<S> resultStore, Map<TypeMirror, S> exceptionalStores) {
         this(value, resultStore, exceptionalStores, false);
     }
 
     @Override
-    public S getRegularStore() {
+    public Set<S> getRegularStores() {
         return store;
     }
 
     @Override
-    public S getThenStore() {
+    public Set<S> getThenStores() {
         return store;
     }
 
     @Override
-    public S getElseStore() {
+    public Set<S> getElseStores() {
         // copy the store such that it is the same as the result of getThenStore
         // (that is, identical according to equals), but two different objects.
-        return store.copy();
+        return new HashSet<S>(store);
     }
 
     @Override

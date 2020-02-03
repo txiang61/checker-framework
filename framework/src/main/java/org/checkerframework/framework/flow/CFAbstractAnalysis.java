@@ -9,6 +9,7 @@ import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.dataflow.analysis.Analysis;
+import org.checkerframework.dataflow.analysis.ConditionEvaluator;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.framework.source.SourceChecker;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
@@ -72,6 +73,7 @@ public abstract class CFAbstractAnalysis<
         this.transferFunction = createTransferFunction();
         // TODO: remove parameter and set to empty list.
         this.fieldValues = fieldValues;
+        this.conditionEvaluator = createConditionEvaluator();
     }
 
     public CFAbstractAnalysis(
@@ -98,6 +100,11 @@ public abstract class CFAbstractAnalysis<
     /** @return the transfer function to be used by the analysis */
     public T createTransferFunction() {
         return atypeFactory.createFlowTransferFunction(this);
+    }
+
+    /** @return the conditional evaluation result used by the analysis */
+    public ConditionEvaluator<V, S> createConditionEvaluator() {
+        return atypeFactory.createFlowConditionalEvaluator(this);
     }
 
     /** @return an empty store of the appropriate type */
