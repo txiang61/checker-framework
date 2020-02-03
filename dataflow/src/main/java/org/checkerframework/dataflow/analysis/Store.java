@@ -31,6 +31,7 @@ public interface Store<S extends Store<S>> {
         ELSE_TO_BOTH, // Else store flows to both then and else of successor.
         THEN_TO_THEN, // Then store flows to the then of successor.  Else store is ignored.
         ELSE_TO_ELSE, // Else store flows to the else of successor.  Then store is ignored.
+        THEN_TO_BACK, // Then store flows to the beginning of the loop.
     }
 
     /** @return an exact copy of this store. */

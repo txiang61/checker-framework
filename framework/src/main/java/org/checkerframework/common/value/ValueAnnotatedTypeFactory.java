@@ -48,6 +48,7 @@ import org.checkerframework.common.value.qual.StringVal;
 import org.checkerframework.common.value.qual.UnknownVal;
 import org.checkerframework.common.value.util.NumberUtils;
 import org.checkerframework.common.value.util.Range;
+import org.checkerframework.dataflow.analysis.ConditionEvaluator;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
 import org.checkerframework.framework.flow.CFAbstractAnalysis;
 import org.checkerframework.framework.flow.CFStore;
@@ -222,6 +223,12 @@ public class ValueAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     public CFTransfer createFlowTransferFunction(
             CFAbstractAnalysis<CFValue, CFStore, CFTransfer> analysis) {
         return new ValueTransfer(analysis);
+    }
+
+    @Override
+    public ConditionEvaluator<CFValue, CFStore> createFlowConditionalEvaluator(
+            CFAbstractAnalysis<CFValue, CFStore, CFTransfer> analysis) {
+        return new ValueConditionEvaluator(analysis);
     }
 
     @Override
