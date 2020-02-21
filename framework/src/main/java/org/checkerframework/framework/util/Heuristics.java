@@ -123,6 +123,12 @@ public class Heuristics {
     public static class Within extends Matcher {
         private final Matcher matcher;
 
+        /**
+         * Create a new Within matcher.
+         *
+         * @param matcher the matcher that {@code Within.match} will try, on every parent of the
+         *     path it is given
+         */
         public Within(Matcher matcher) {
             this.matcher = matcher;
         }
@@ -205,28 +211,6 @@ public class Heuristics {
                 }
             }
             return false;
-        }
-    }
-
-    public static class Matchers {
-        public static Matcher preceededBy(Matcher matcher) {
-            return new PreceededBy(matcher);
-        }
-
-        public static Matcher withIn(Matcher matcher) {
-            return new Within(matcher);
-        }
-
-        public static Matcher whenTrue(Matcher conditionMatcher) {
-            return new WithinTrueBranch(conditionMatcher);
-        }
-
-        public static Matcher ofKind(Tree.Kind kind, Matcher matcher) {
-            return new OfKind(kind, matcher);
-        }
-
-        public static Matcher or(Matcher... matchers) {
-            return new OrMatcher(matchers);
         }
     }
 }
