@@ -143,11 +143,16 @@ public abstract class AbstractViewpointAdapter implements ViewpointAdapter {
         AnnotatedTypeMirror returnType = declMethodType.getReturnType();
         AnnotatedTypeMirror methodReceiver = declMethodType.getReceiverType();
 
+        // new parameterTypes
+        List<AnnotatedTypeMirror> new_parameterTypes = new ArrayList<>();
+        AnnotatedTypeMirror new_returnType = null;
+
         Map<AnnotatedTypeMirror, AnnotatedTypeMirror> mappings = new IdentityHashMap<>();
 
         for (AnnotatedTypeMirror parameterType : parameterTypes) {
             AnnotatedTypeMirror p = combineTypeWithType(receiverType, parameterType);
             mappings.put(parameterType, p);
+            new_parameterTypes.add(p);
         }
 
         for (AnnotatedTypeVariable typeVariable : typeVariables) {
@@ -158,6 +163,7 @@ public abstract class AbstractViewpointAdapter implements ViewpointAdapter {
         if (returnType.getKind() != TypeKind.VOID) {
             AnnotatedTypeMirror r = combineTypeWithType(receiverType, returnType);
             mappings.put(returnType, r);
+            new_returnType = r;
         }
 
         if (methodReceiver != null) {
@@ -174,6 +180,12 @@ public abstract class AbstractViewpointAdapter implements ViewpointAdapter {
         methodType.setReceiverType(declMethodType.getReceiverType());
         methodType.setParameterTypes(declMethodType.getParameterTypes());
         methodType.setTypeVariables(declMethodType.getTypeVariables());
+        if (!new_parameterTypes.isEmpty()) {
+            methodType.setParameterTypes(new_parameterTypes);
+        }
+        if (new_returnType != null) {
+            methodType.setReturnType(new_returnType);
+        }
     }
 
     /** Check if the method invocation should be adapted. */
