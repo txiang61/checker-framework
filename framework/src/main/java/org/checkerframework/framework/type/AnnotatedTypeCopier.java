@@ -293,7 +293,20 @@ public class AnnotatedTypeCopier
     public AnnotatedTypeMirror visitPrimitive(
             AnnotatedPrimitiveType original,
             IdentityHashMap<AnnotatedTypeMirror, AnnotatedTypeMirror> originalToCopy) {
-        return makeCopy(original);
+        if (originalToCopy.containsKey(original)) {
+            return originalToCopy.get(original);
+        }
+
+        final AnnotatedPrimitiveType copy =
+                (AnnotatedPrimitiveType)
+                        AnnotatedTypeMirror.createType(
+                                original.getUnderlyingType(),
+                                original.atypeFactory,
+                                original.isDeclaration());
+        maybeCopyPrimaryAnnotations(original, copy);
+        originalToCopy.put(original, copy);
+
+        return copy;
     }
 
     @Override
