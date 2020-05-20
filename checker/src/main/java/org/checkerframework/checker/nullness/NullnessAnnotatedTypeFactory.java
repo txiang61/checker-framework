@@ -105,6 +105,8 @@ public class NullnessAnnotatedTypeFactory
                     "edu.umd.cs.findbugs.annotations.NonNull",
                     // https://github.com/ReactiveX/RxJava/blob/2.x/src/main/java/io/reactivex/annotations/NonNull.java
                     "io.reactivex.annotations.NonNull",
+                    // https://github.com/ReactiveX/RxJava/blob/3.x/src/main/java/io/reactivex/rxjava3/annotations/NonNull.java
+                    "io.reactivex.rxjava3.annotations.NonNull",
                     // https://jcp.org/en/jsr/detail?id=305
                     "javax.annotation.Nonnull",
                     // https://javaee.github.io/javaee-spec/javadocs/javax/validation/constraints/NotNull.html
@@ -120,7 +122,7 @@ public class NullnessAnnotatedTypeFactory
                     "org.eclipse.jgit.annotations.NonNull",
                     // https://github.com/JetBrains/intellij-community/blob/master/platform/annotations/java8/src/org/jetbrains/annotations/NotNull.java
                     "org.jetbrains.annotations.NotNull",
-                    // http://svn.code.sf.net/p/jmlspecs/code/JMLAnnotations/trunk/src/org/jmlspecs/annotation/Nullable.java
+                    // http://svn.code.sf.net/p/jmlspecs/code/JMLAnnotations/trunk/src/org/jmlspecs/annotation/NonNull.java
                     "org.jmlspecs.annotation.NonNull",
                     // http://bits.netbeans.org/8.2/javadoc/org-netbeans-api-annotations-common/org/netbeans/api/annotations/common/NonNull.html
                     "org.netbeans.api.annotations.common.NonNull",
@@ -151,6 +153,8 @@ public class NullnessAnnotatedTypeFactory
                     "edu.umd.cs.findbugs.annotations.UnknownNullness",
                     // https://github.com/ReactiveX/RxJava/blob/2.x/src/main/java/io/reactivex/annotations/Nullable.java
                     "io.reactivex.annotations.Nullable",
+                    // https://github.com/ReactiveX/RxJava/blob/3.x/src/main/java/io/reactivex/rxjava3/annotations/Nullable.java
+                    "io.reactivex.rxjava3.annotations.Nullable",
                     // https://jcp.org/en/jsr/detail?id=305
                     "javax.annotation.CheckForNull",
                     "javax.annotation.Nullable",
@@ -205,7 +209,7 @@ public class NullnessAnnotatedTypeFactory
         postInit();
 
         // do this last, as it might use the factory again.
-        this.collectionToArrayHeuristics = new CollectionToArrayHeuristics(processingEnv, this);
+        this.collectionToArrayHeuristics = new CollectionToArrayHeuristics(checker, this);
     }
 
     @Override

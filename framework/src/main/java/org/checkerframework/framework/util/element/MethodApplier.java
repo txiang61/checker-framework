@@ -18,7 +18,7 @@ import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedTypeVari
 import org.checkerframework.framework.util.element.ElementAnnotationUtil.UnexpectedAnnotationLocationException;
 import org.checkerframework.javacutil.BugInCF;
 import org.checkerframework.javacutil.ElementUtils;
-import org.checkerframework.javacutil.PluginUtil;
+import org.checkerframework.javacutil.SystemUtil;
 
 /**
  * Adds annotations from element to the return type, formal parameter types, type parameters, and
@@ -112,13 +112,13 @@ public class MethodApplier extends TargetedElementAnnotationApplier {
         if (methodType.getReturnType() instanceof AnnotatedTypeVariable) {
             applyTypeVarUseOnReturnType();
         }
-        ElementAnnotationUtil.addAnnotationsFromElement(
+        ElementAnnotationUtil.addDeclarationAnnotationsFromElement(
                 methodType.getReturnType(), methodSymbol.getAnnotationMirrors());
 
         final List<AnnotatedTypeMirror> params = methodType.getParameterTypes();
         for (int i = 0; i < params.size(); ++i) {
             // Add declaration annotations to the parameter type
-            ElementAnnotationUtil.addAnnotationsFromElement(
+            ElementAnnotationUtil.addDeclarationAnnotationsFromElement(
                     params.get(i), methodSymbol.getParameters().get(i).getAnnotationMirrors());
         }
 
@@ -154,7 +154,7 @@ public class MethodApplier extends TargetedElementAnnotationApplier {
         if (!unmatched.isEmpty()) {
             throw new BugInCF(
                     "Unexpected annotations ( "
-                            + PluginUtil.join(",", unmatched)
+                            + SystemUtil.join(",", unmatched)
                             + " ) for"
                             + "type ( "
                             + type
