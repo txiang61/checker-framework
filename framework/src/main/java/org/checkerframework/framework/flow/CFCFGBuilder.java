@@ -125,6 +125,9 @@ public class CFCFGBuilder extends CFGBuilder {
                     factory.setEnclosingElementForArtificialTree(tree, classElement);
                 }
             }
+            if (factory.getEnclosingElementForArtificialTree(tree) != null) {
+                factory.createTreePathForArtificialTree(tree, getCurrentPath());
+            }
         }
 
         @Override
