@@ -297,16 +297,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedPrimitiveType copy =
-                (AnnotatedPrimitiveType)
-                        AnnotatedTypeMirror.createType(
-                                original.getUnderlyingType(),
-                                original.atypeFactory,
-                                original.isDeclaration());
-        maybeCopyPrimaryAnnotations(original, copy);
-        originalToCopy.put(original, copy);
-
-        return copy;
+        return makeCopy(original);
     }
 
     @Override
