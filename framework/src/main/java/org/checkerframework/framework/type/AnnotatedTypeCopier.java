@@ -293,10 +293,10 @@ public class AnnotatedTypeCopier
     public AnnotatedTypeMirror visitPrimitive(
             AnnotatedPrimitiveType original,
             IdentityHashMap<AnnotatedTypeMirror, AnnotatedTypeMirror> originalToCopy) {
+        /* Replaces the original anno if it is in the hash map. Otherwise, make a copy of the original. */
         if (originalToCopy.containsKey(original)) {
             return originalToCopy.get(original);
         }
-
         return makeCopy(original);
     }
 
