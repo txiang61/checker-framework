@@ -293,7 +293,7 @@ public class AnnotatedTypeCopier
     public AnnotatedTypeMirror visitPrimitive(
             AnnotatedPrimitiveType original,
             IdentityHashMap<AnnotatedTypeMirror, AnnotatedTypeMirror> originalToCopy) {
-        return makeOrReturnCopy(original);
+        return makeOrReturnCopy(original, originalToCopy);
     }
 
     @Override
