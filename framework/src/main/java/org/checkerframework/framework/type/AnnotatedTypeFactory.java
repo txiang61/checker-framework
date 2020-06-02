@@ -3004,6 +3004,9 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
      *
      * <p>See {@code
      * org.checkerframework.framework.flow.CFCFGBuilder.CFCFGTranslationPhaseOne.handleArtificialTree(Tree)}.
+     *
+     * @param node the artificial {@link Tree} to create path for
+     * @param path the {@link TreePath} of the artificial tree
      */
     public void createTreePathForArtificialTree(Tree node, TreePath path) {
         treePathCache.addPath(node, path);
