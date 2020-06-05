@@ -65,6 +65,12 @@ public class Analysis<
     protected ConditionEvaluator<A, S> conditionEvaluator;
 
     /** The current control flow graph to perform the analysis on. */
+    protected ControlFlowGraph cfg;
+
+    /** The associated processing environment. */
+    protected final ProcessingEnvironment env;
+
+    /** The current control flow graph to perform the analysis on. */
     protected @MonotonicNonNull ControlFlowGraph cfg;
 
     /** Then stores before every basic block (assumed to be 'no information' if not present). */

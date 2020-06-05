@@ -555,6 +555,28 @@ public class CFGBuilder {
         }
     }
 
+    /** An extended node of type {@link ExtendedNodeType#UNCONDITIONAL_JUMP_BACK}. */
+    protected static class UnconditionalJumpBack extends ExtendedNode {
+
+        protected Label jumpTarget;
+
+        public UnconditionalJumpBack(Label jumpTarget) {
+            super(ExtendedNodeType.UNCONDITIONAL_JUMP_BACK);
+            assert jumpTarget != null;
+            this.jumpTarget = jumpTarget;
+        }
+
+        @Override
+        public Label getLabel() {
+            return jumpTarget;
+        }
+
+        @Override
+        public String toString() {
+            return "JumpMarker(" + getLabel() + ")";
+        }
+    }
+
     /**
      * A label is used to refer to other extended nodes using a mapping from labels to extended
      * nodes. Labels get their names either from labeled statements in the source code or from

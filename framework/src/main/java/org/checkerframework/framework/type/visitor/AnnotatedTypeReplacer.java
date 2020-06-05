@@ -75,10 +75,10 @@ public class AnnotatedTypeReplacer extends AnnotatedTypeComparer<Void> {
     }
 
     @Override
-    protected Void compare(AnnotatedTypeMirror from, AnnotatedTypeMirror to) {
-        assert from != to;
-        if (from != null && to != null) {
-            replaceAnnotations(from, to);
+    protected Void compare(AnnotatedTypeMirror one, AnnotatedTypeMirror two) {
+        //        assert one != two;
+        if (one != null && two != null) {
+            replaceAnnotations(one, two);
         }
         return null;
     }
