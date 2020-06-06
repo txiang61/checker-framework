@@ -310,7 +310,6 @@ public class CFGBuilder {
             NODE,
             EXCEPTION_NODE,
             UNCONDITIONAL_JUMP,
-            UNCONDITIONAL_JUMP_BACK,
             CONDITIONAL_JUMP
         }
 
@@ -527,50 +526,6 @@ public class CFGBuilder {
          * @return a string representation.
          * @see org.checkerframework.dataflow.cfg.CFGBuilder.PhaseOneResult#nodeToString
          */
-        @Override
-        public String toString() {
-            return "JumpMarker(" + getLabel() + ")";
-        }
-    }
-
-    /** An extended node of type {@link ExtendedNodeType#UNCONDITIONAL_JUMP_BACK}. */
-    protected static class UnconditionalJumpBack extends ExtendedNode {
-
-        protected Label jumpTarget;
-
-        public UnconditionalJumpBack(Label jumpTarget) {
-            super(ExtendedNodeType.UNCONDITIONAL_JUMP_BACK);
-            assert jumpTarget != null;
-            this.jumpTarget = jumpTarget;
-        }
-
-        @Override
-        public Label getLabel() {
-            return jumpTarget;
-        }
-
-        @Override
-        public String toString() {
-            return "JumpMarker(" + getLabel() + ")";
-        }
-    }
-
-    /** An extended node of type {@link ExtendedNodeType#UNCONDITIONAL_JUMP_BACK}. */
-    protected static class UnconditionalJumpBack extends ExtendedNode {
-
-        protected Label jumpTarget;
-
-        public UnconditionalJumpBack(Label jumpTarget) {
-            super(ExtendedNodeType.UNCONDITIONAL_JUMP_BACK);
-            assert jumpTarget != null;
-            this.jumpTarget = jumpTarget;
-        }
-
-        @Override
-        public Label getLabel() {
-            return jumpTarget;
-        }
-
         @Override
         public String toString() {
             return "JumpMarker(" + getLabel() + ")";
@@ -1365,22 +1320,6 @@ public class CFGBuilder {
                             assert target != null;
                             missingEdges.add(new Tuple<>(block, target));
                         }
-                        block = new RegularBlockImpl();
-                        break;
-                    case UNCONDITIONAL_JUMP_BACK:
-                        System.out.println(node);
-                        if (leaders.contains(i)) {
-                            RegularBlockImpl b = new RegularBlockImpl();
-                            block.setSuccessor(b);
-                            block = b;
-                        }
-                        node.setBlock(block);
-                        Integer index = bindings.get(node.getLabel());
-                        assert index != null : "CFGBuilder: problem in CFG construction " + block;
-                        ExtendedNode extendedNode = nodeList.get(index);
-                        BlockImpl target_block = extendedNode.getBlock();
-                        block.setSuccessor(target_block);
-                        block.setFlowRule(Store.FlowRule.THEN_TO_BACK);
                         block = new RegularBlockImpl();
                         break;
                     case EXCEPTION_NODE:
@@ -3812,7 +3751,7 @@ public class CFGBuilder {
 
                 // Loop back edge
                 addLabelForNextNode(updateStart);
-                extendWithExtendedNode(new UnconditionalJumpBack(conditionStart));
+                extendWithExtendedNode(new UnconditionalJump(conditionStart));
 
             } else {
                 // TODO: Shift any labels after the initialization of the
@@ -3937,7 +3876,7 @@ public class CFGBuilder {
                 assignNode.setInSource(false);
                 extendWithNode(assignNode);
 
-                extendWithExtendedNode(new UnconditionalJumpBack(conditionStart));
+                extendWithExtendedNode(new UnconditionalJump(conditionStart));
             }
 
             // Loop exit
@@ -4026,7 +3965,7 @@ public class CFGBuilder {
                 scan(update, p);
             }
 
-            extendWithExtendedNode(new UnconditionalJumpBack(conditionStart));
+            extendWithExtendedNode(new UnconditionalJump(conditionStart));
 
             // Loop exit
             addLabelForNextNode(loopExit);
@@ -4970,7 +4909,7 @@ public class CFGBuilder {
             if (tree.getStatement() != null) {
                 scan(tree.getStatement(), p);
             }
-            extendWithExtendedNode(new UnconditionalJumpBack(conditionStart));
+            extendWithExtendedNode(new UnconditionalJump(conditionStart));
 
             // Loop exit
             addLabelForNextNode(loopExit);

@@ -1,6 +1,7 @@
 package org.checkerframework.dataflow.analysis;
 
 import java.util.Map;
+import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -49,19 +50,19 @@ public abstract class TransferResult<A extends AbstractValue<A>, S extends Store
      *     org.checkerframework.dataflow.cfg.node.Node} corresponding to this transfer function
      *     result.
      */
-    public abstract S getRegularStore();
+    public abstract Set<S> getRegularStores();
 
     /**
      * @return the result store produced if the {@link org.checkerframework.dataflow.cfg.node.Node}
      *     this result belongs to evaluates to {@code true}.
      */
-    public abstract S getThenStore();
+    public abstract Set<S> getThenStores();
 
     /**
      * @return the result store produced if the {@link org.checkerframework.dataflow.cfg.node.Node}
      *     this result belongs to evaluates to {@code false}.
      */
-    public abstract S getElseStore();
+    public abstract Set<S> getElseStores();
 
     /**
      * @return the store that flows along the outgoing exceptional edge labeled with {@code
