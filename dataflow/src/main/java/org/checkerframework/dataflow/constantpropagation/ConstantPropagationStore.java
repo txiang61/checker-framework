@@ -17,6 +17,16 @@ public class ConstantPropagationStore implements Store<ConstantPropagationStore>
     /** Information about variables gathered so far. */
     Map<Node, Constant> contents;
 
+    boolean active = true;
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean flag) {
+        active = flag;
+    }
+
     public ConstantPropagationStore() {
         contents = new HashMap<>();
     }

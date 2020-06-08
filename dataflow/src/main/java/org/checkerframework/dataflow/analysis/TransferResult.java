@@ -1,7 +1,6 @@
 package org.checkerframework.dataflow.analysis;
 
 import java.util.Map;
-import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -23,7 +22,7 @@ public abstract class TransferResult<A extends AbstractValue<A>, S extends Store
      * {@link org.checkerframework.dataflow.cfg.node.Node} does not throw any exceptions). Does not
      * necessarily contain a store for every exception, in which case the in-store will be used.
      */
-    protected final @Nullable Map<TypeMirror, S> exceptionalStores;
+    protected final @Nullable Map<TypeMirror, StoreSet<S>> exceptionalStores;
 
     /**
      * The abstract value of the {@link org.checkerframework.dataflow.cfg.node.Node} associated with
@@ -31,7 +30,8 @@ public abstract class TransferResult<A extends AbstractValue<A>, S extends Store
      */
     protected @Nullable A resultValue;
 
-    public TransferResult(@Nullable A resultValue, @Nullable Map<TypeMirror, S> exceptionalStores) {
+    public TransferResult(
+            @Nullable A resultValue, @Nullable Map<TypeMirror, StoreSet<S>> exceptionalStores) {
         this.resultValue = resultValue;
         this.exceptionalStores = exceptionalStores;
     }
@@ -50,25 +50,25 @@ public abstract class TransferResult<A extends AbstractValue<A>, S extends Store
      *     org.checkerframework.dataflow.cfg.node.Node} corresponding to this transfer function
      *     result.
      */
-    public abstract Set<S> getRegularStores();
+    public abstract StoreSet<S> getRegularStore();
 
     /**
      * @return the result store produced if the {@link org.checkerframework.dataflow.cfg.node.Node}
      *     this result belongs to evaluates to {@code true}.
      */
-    public abstract Set<S> getThenStores();
+    public abstract StoreSet<S> getThenStore();
 
     /**
      * @return the result store produced if the {@link org.checkerframework.dataflow.cfg.node.Node}
      *     this result belongs to evaluates to {@code false}.
      */
-    public abstract Set<S> getElseStores();
+    public abstract StoreSet<S> getElseStore();
 
     /**
      * @return the store that flows along the outgoing exceptional edge labeled with {@code
      *     exception} (or {@code null} if no special handling is required for exceptional edges).
      */
-    public @Nullable S getExceptionalStore(TypeMirror exception) {
+    public @Nullable StoreSet<S> getExceptionalStore(TypeMirror exception) {
         if (exceptionalStores == null) {
             return null;
         }
@@ -79,7 +79,7 @@ public abstract class TransferResult<A extends AbstractValue<A>, S extends Store
      * @return a Map of {@link TypeMirror} to {@link Store}, {@code null} otherwise
      * @see TransferResult#getExceptionalStore(TypeMirror)
      */
-    public @Nullable Map<TypeMirror, S> getExceptionalStores() {
+    public @Nullable Map<TypeMirror, StoreSet<S>> getExceptionalStores() {
         return exceptionalStores;
     }
 

@@ -1,8 +1,6 @@
 package org.checkerframework.dataflow.analysis;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringJoiner;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -17,7 +15,7 @@ public class RegularTransferResult<A extends AbstractValue<A>, S extends Store<S
         extends TransferResult<A, S> {
 
     /** The regular result store. */
-    protected final Set<S> store;
+    protected final StoreSet<S> store;
 
     /** Whether the store changed. */
     private final boolean storeChanged;
@@ -36,18 +34,20 @@ public class RegularTransferResult<A extends AbstractValue<A>, S extends Store<S
      *
      * @see #RegularTransferResult(AbstractValue, Store, Map, boolean)
      */
-    public RegularTransferResult(@Nullable A value, Set<S> resultStore, boolean storeChanged) {
+    public RegularTransferResult(@Nullable A value, StoreSet<S> resultStore, boolean storeChanged) {
         this(value, resultStore, null, storeChanged);
     }
 
     /** @see #RegularTransferResult(AbstractValue, Store, Map, boolean) */
-    public RegularTransferResult(@Nullable A value, Set<S> resultStore) {
+    public RegularTransferResult(@Nullable A value, StoreSet<S> resultStore) {
         this(value, resultStore, false);
     }
 
     /** @see #RegularTransferResult(AbstractValue, Store, Map, boolean) */
     public RegularTransferResult(
-            @Nullable A value, Set<S> resultStore, Map<TypeMirror, S> exceptionalStores) {
+            @Nullable A value,
+            StoreSet<S> resultStore,
+            Map<TypeMirror, StoreSet<S>> exceptionalStores) {
         this(value, resultStore, exceptionalStores, false);
     }
 
@@ -72,8 +72,8 @@ public class RegularTransferResult<A extends AbstractValue<A>, S extends Store<S
      */
     public RegularTransferResult(
             @Nullable A value,
-            Set<S> resultStore,
-            @Nullable Map<TypeMirror, S> exceptionalStores,
+            StoreSet<S> resultStore,
+            @Nullable Map<TypeMirror, StoreSet<S>> exceptionalStores,
             boolean storeChanged) {
         super(value, exceptionalStores);
         this.store = resultStore;
@@ -82,20 +82,20 @@ public class RegularTransferResult<A extends AbstractValue<A>, S extends Store<S
 
     /** The regular result store. */
     @Override
-    public Set<S> getRegularStores() {
+    public StoreSet<S> getRegularStore() {
         return store;
     }
 
     @Override
-    public Set<S> getThenStores() {
+    public StoreSet<S> getThenStore() {
         return store;
     }
 
     @Override
-    public Set<S> getElseStores() {
+    public StoreSet<S> getElseStore() {
         // copy the store such that it is the same as the result of getThenStore
         // (that is, identical according to equals), but two different objects.
-        return new HashSet<S>(store);
+        return store.copy();
     }
 
     @Override

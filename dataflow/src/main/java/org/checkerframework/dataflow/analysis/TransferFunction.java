@@ -33,5 +33,6 @@ public interface TransferFunction<A extends AbstractValue<A>, S extends Store<S>
      * @return the initial store to be used by the org.checkerframework.dataflow analysis. {@code
      *     parameters} is only set if the underlying AST is a method.
      */
-    S initialStore(UnderlyingAST underlyingAST, @Nullable List<LocalVariableNode> parameters);
+    StoreSet<S> initialStore(
+            UnderlyingAST underlyingAST, @Nullable List<LocalVariableNode> parameters);
 }

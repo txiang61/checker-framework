@@ -66,6 +66,8 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     /** Information collected about the current object. */
     protected V thisValue;
 
+    private boolean active = true;
+
     /**
      * Information collected about fields, using the internal representation {@link FieldAccess}.
      */
@@ -782,6 +784,16 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
                 methodValuesIterator.remove();
             }
         }
+    }
+
+    @Override
+    public boolean isActive() {
+        return active;
+    }
+
+    @Override
+    public void setActive(boolean flag) {
+        active = flag;
     }
 
     /**

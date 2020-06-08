@@ -64,10 +64,10 @@ public class Analysis<
     protected @MonotonicNonNull ControlFlowGraph cfg;
 
     /** Then stores before every basic block (assumed to be 'no information' if not present). */
-    protected final IdentityHashMap<Block, S> thenStores;
+    protected final IdentityHashMap<Block, StoreSet<S>> thenStores;
 
     /** Else stores before every basic block (assumed to be 'no information' if not present). */
-    protected final IdentityHashMap<Block, S> elseStores;
+    protected final IdentityHashMap<Block, StoreSet<S>> elseStores;
 
     /**
      * Number of times every block has been analyzed since the last time widening was applied. Null,
@@ -270,7 +270,7 @@ public class Analysis<
                     for (Entry<TypeMirror, Set<Block>> e :
                             eb.getExceptionalSuccessors().entrySet()) {
                         TypeMirror cause = e.getKey();
-                        S exceptionalStore = transferResult.getExceptionalStore(cause);
+                        StoreSet<S> exceptionalStore = transferResult.getExceptionalStore(cause);
                         if (exceptionalStore != null) {
                             for (Block exceptionSucc : e.getValue()) {
                                 addStoreBefore(
@@ -501,7 +501,7 @@ public class Analysis<
             // nothing to do
         }
         assert transferFunction != null : "@AssumeAssertion(nullness): invariant";
-        S initialStore = transferFunction.initialStore(underlyingAST, parameters);
+        StoreSet<S> initialStore = transferFunction.initialStore(underlyingAST, parameters);
         Block entry = cfg.getEntryBlock();
         thenStores.put(entry, initialStore);
         elseStores.put(entry, initialStore);
@@ -523,9 +523,13 @@ public class Analysis<
      * location.
      */
     protected void addStoreBefore(
-            Block b, @Nullable Node node, S s, Store.Kind kind, boolean addBlockToWorklist) {
-        S thenStore = getStoreBefore(b, Store.Kind.THEN);
-        S elseStore = getStoreBefore(b, Store.Kind.ELSE);
+            Block b,
+            @Nullable Node node,
+            StoreSet<S> s,
+            Store.Kind kind,
+            boolean addBlockToWorklist) {
+        StoreSet<S> thenStore = getStoreBefore(b, Store.Kind.THEN);
+        StoreSet<S> elseStore = getStoreBefore(b, Store.Kind.ELSE);
         boolean shouldWiden = false;
 
         if (blockCount != null) {
@@ -545,7 +549,7 @@ public class Analysis<
             case THEN:
                 {
                     // Update the then store
-                    S newThenStore = mergeStores(s, thenStore, shouldWiden);
+                    StoreSet<S> newThenStore = mergeStores(s, thenStore, shouldWiden);
                     if (!newThenStore.equals(thenStore)) {
                         thenStores.put(b, newThenStore);
                         if (elseStore != null) {
@@ -558,7 +562,7 @@ public class Analysis<
             case ELSE:
                 {
                     // Update the else store
-                    S newElseStore = mergeStores(s, elseStore, shouldWiden);
+                    StoreSet<S> newElseStore = mergeStores(s, elseStore, shouldWiden);
                     if (!newElseStore.equals(elseStore)) {
                         elseStores.put(b, newElseStore);
                         if (thenStore != null) {
@@ -571,7 +575,7 @@ public class Analysis<
             case BOTH:
                 if (thenStore == elseStore) {
                     // Currently there is only one regular store
-                    S newStore = mergeStores(s, thenStore, shouldWiden);
+                    StoreSet<S> newStore = mergeStores(s, thenStore, shouldWiden);
                     if (!newStore.equals(thenStore)) {
                         thenStores.put(b, newStore);
                         elseStores.put(b, newStore);
@@ -581,13 +585,13 @@ public class Analysis<
                 } else {
                     boolean storeChanged = false;
 
-                    S newThenStore = mergeStores(s, thenStore, shouldWiden);
+                    StoreSet<S> newThenStore = mergeStores(s, thenStore, shouldWiden);
                     if (!newThenStore.equals(thenStore)) {
                         thenStores.put(b, newThenStore);
                         storeChanged = true;
                     }
 
-                    S newElseStore = mergeStores(s, elseStore, shouldWiden);
+                    StoreSet<S> newElseStore = mergeStores(s, elseStore, shouldWiden);
                     if (!newElseStore.equals(elseStore)) {
                         elseStores.put(b, newElseStore);
                         storeChanged = true;
@@ -606,7 +610,8 @@ public class Analysis<
     }
 
     /** Merge two stores, possibly widening the result. */
-    private S mergeStores(S newStore, @Nullable S previousStore, boolean shouldWiden) {
+    private StoreSet<S> mergeStores(
+            StoreSet<S> newStore, @Nullable StoreSet<S> previousStore, boolean shouldWiden) {
         if (previousStore == null) {
             return newStore;
         } else if (shouldWiden) {
@@ -695,7 +700,7 @@ public class Analysis<
     }
 
     /** @return the store corresponding to the location right before the basic block {@code b}. */
-    protected @Nullable S getStoreBefore(Block b, Store.Kind kind) {
+    protected @Nullable StoreSet<S> getStoreBefore(Block b, Store.Kind kind) {
         switch (kind) {
             case THEN:
                 return readFromStore(thenStores, b);
@@ -862,11 +867,11 @@ public class Analysis<
      *     method cannot exit through the regular exit block).
      */
     @RequiresNonNull("cfg")
-    public @Nullable S getRegularExitStore() {
+    public @Nullable StoreSet<S> getRegularExitStore() {
         assert cfg != null : "@AssumeAssertion(nullness): invariant";
         SpecialBlock regularExitBlock = cfg.getRegularExitBlock();
         if (inputs.containsKey(regularExitBlock)) {
-            S regularExitStore = inputs.get(regularExitBlock).getRegularStore();
+            StoreSet<S> regularExitStore = inputs.get(regularExitBlock).getRegularStore();
             return regularExitStore;
         } else {
             return null;
@@ -875,11 +880,11 @@ public class Analysis<
 
     /** @return the exceptional exit store. */
     @RequiresNonNull("cfg")
-    public @Nullable S getExceptionalExitStore() {
+    public @Nullable StoreSet<S> getExceptionalExitStore() {
         assert cfg != null : "@AssumeAssertion(nullness): invariant";
         SpecialBlock exceptionalExitBlock = cfg.getExceptionalExitBlock();
         if (inputs.containsKey(exceptionalExitBlock)) {
-            S exceptionalExitStore = inputs.get(exceptionalExitBlock).getRegularStore();
+            StoreSet<S> exceptionalExitStore = inputs.get(exceptionalExitBlock).getRegularStore();
             return exceptionalExitStore;
         } else {
             return null;

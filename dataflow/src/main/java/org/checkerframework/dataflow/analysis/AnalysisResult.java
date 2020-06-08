@@ -188,14 +188,14 @@ public class AnalysisResult<A extends AbstractValue<A>, S extends Store<S>> {
     }
 
     /** @return the store immediately before a given {@link Tree}. */
-    public @Nullable S getStoreBefore(Tree tree) {
+    public @Nullable StoreSet<S> getStoreBefore(Tree tree) {
         Set<Node> nodes = getNodesForTree(tree);
         if (nodes == null) {
             return null;
         }
-        S merged = null;
+        StoreSet<S> merged = null;
         for (Node node : nodes) {
-            S s = getStoreBefore(node);
+            StoreSet<S> s = getStoreBefore(node);
             if (merged == null) {
                 merged = s;
             } else if (s != null) {
@@ -206,19 +206,19 @@ public class AnalysisResult<A extends AbstractValue<A>, S extends Store<S>> {
     }
 
     /** @return the store immediately before a given {@link Node}. */
-    public @Nullable S getStoreBefore(Node node) {
+    public @Nullable StoreSet<S> getStoreBefore(Node node) {
         return runAnalysisFor(node, true);
     }
 
     /** @return the store immediately after a given {@link Tree}. */
-    public @Nullable S getStoreAfter(Tree tree) {
+    public @Nullable StoreSet<S> getStoreAfter(Tree tree) {
         Set<Node> nodes = getNodesForTree(tree);
         if (nodes == null) {
             return null;
         }
-        S merged = null;
+        StoreSet<S> merged = null;
         for (Node node : nodes) {
-            S s = getStoreAfter(node);
+            StoreSet<S> s = getStoreAfter(node);
             if (merged == null) {
                 merged = s;
             } else if (s != null) {
@@ -229,7 +229,7 @@ public class AnalysisResult<A extends AbstractValue<A>, S extends Store<S>> {
     }
 
     /** @return the store immediately after a given {@link Node}. */
-    public @Nullable S getStoreAfter(Node node) {
+    public @Nullable StoreSet<S> getStoreAfter(Node node) {
         return runAnalysisFor(node, false);
     }
 
@@ -241,7 +241,7 @@ public class AnalysisResult<A extends AbstractValue<A>, S extends Store<S>> {
      * <p>If the given {@link Node} cannot be reached (in the control flow graph), then {@code null}
      * is returned.
      */
-    protected @Nullable S runAnalysisFor(Node node, boolean before) {
+    protected @Nullable StoreSet<S> runAnalysisFor(Node node, boolean before) {
         Block block = node.getBlock();
         assert block != null : "@AssumeAssertion(nullness): invariant";
         TransferInput<A, S> transferInput = stores.get(block);
@@ -261,7 +261,7 @@ public class AnalysisResult<A extends AbstractValue<A>, S extends Store<S>> {
      * store it in {@code analysisCaches}. The cache is a map from a node to the analysis result of
      * the node.
      */
-    public static <A extends AbstractValue<A>, S extends Store<S>> S runAnalysisFor(
+    public static <A extends AbstractValue<A>, S extends Store<S>> StoreSet<S> runAnalysisFor(
             Node node,
             boolean before,
             TransferInput<A, S> transferInput,

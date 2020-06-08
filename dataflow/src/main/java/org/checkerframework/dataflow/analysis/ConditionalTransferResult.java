@@ -1,8 +1,6 @@
 package org.checkerframework.dataflow.analysis;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringJoiner;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -21,10 +19,10 @@ public class ConditionalTransferResult<A extends AbstractValue<A>, S extends Sto
     private final boolean storeChanged;
 
     /** The 'then' result store. */
-    protected final Set<S> thenStore;
+    protected final StoreSet<S> thenStore;
 
     /** The 'else' result store. */
-    protected final Set<S> elseStore;
+    protected final StoreSet<S> elseStore;
 
     /**
      * <em>Exceptions</em>: If the corresponding {@link org.checkerframework.dataflow.cfg.node.Node}
@@ -39,18 +37,22 @@ public class ConditionalTransferResult<A extends AbstractValue<A>, S extends Sto
      * @see #ConditionalTransferResult(AbstractValue, Store, Store, Map, boolean)
      */
     public ConditionalTransferResult(
-            @Nullable A value, Set<S> thenStore, Set<S> elseStore, boolean storeChanged) {
+            @Nullable A value, StoreSet<S> thenStore, StoreSet<S> elseStore, boolean storeChanged) {
         this(value, thenStore, elseStore, null, storeChanged);
     }
 
     /** @see #ConditionalTransferResult(AbstractValue, Store, Store, Map, boolean) */
-    public ConditionalTransferResult(@Nullable A value, Set<S> thenStore, Set<S> elseStore) {
+    public ConditionalTransferResult(
+            @Nullable A value, StoreSet<S> thenStore, StoreSet<S> elseStore) {
         this(value, thenStore, elseStore, false);
     }
 
     /** @see #ConditionalTransferResult(AbstractValue, Store, Store, Map, boolean) */
     public ConditionalTransferResult(
-            A value, Set<S> thenStore, Set<S> elseStore, Map<TypeMirror, S> exceptionalStores) {
+            A value,
+            StoreSet<S> thenStore,
+            StoreSet<S> elseStore,
+            Map<TypeMirror, StoreSet<S>> exceptionalStores) {
         this(value, thenStore, elseStore, exceptionalStores, false);
     }
 
@@ -75,9 +77,9 @@ public class ConditionalTransferResult<A extends AbstractValue<A>, S extends Sto
      */
     public ConditionalTransferResult(
             @Nullable A value,
-            Set<S> thenStore,
-            Set<S> elseStore,
-            @Nullable Map<TypeMirror, S> exceptionalStores,
+            StoreSet<S> thenStore,
+            StoreSet<S> elseStore,
+            @Nullable Map<TypeMirror, StoreSet<S>> exceptionalStores,
             boolean storeChanged) {
         super(value, exceptionalStores);
         this.thenStore = thenStore;
@@ -87,20 +89,17 @@ public class ConditionalTransferResult<A extends AbstractValue<A>, S extends Sto
 
     /** The regular result store. */
     @Override
-    public Set<S> getRegularStores() {
-        Set<S> combineSet = new HashSet<S>();
-        combineSet.addAll(thenStore);
-        combineSet.addAll(elseStore);
-        return combineSet;
+    public StoreSet<S> getRegularStore() {
+        return thenStore.leastUpperBound(elseStore);
     }
 
     @Override
-    public Set<S> getThenStores() {
+    public StoreSet<S> getThenStore() {
         return thenStore;
     }
 
     @Override
-    public Set<S> getElseStores() {
+    public StoreSet<S> getElseStore() {
         return elseStore;
     }
 

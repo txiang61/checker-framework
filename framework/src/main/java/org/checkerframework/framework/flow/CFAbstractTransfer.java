@@ -30,6 +30,7 @@ import org.checkerframework.dataflow.analysis.FlowExpressions.LocalVariable;
 import org.checkerframework.dataflow.analysis.FlowExpressions.Receiver;
 import org.checkerframework.dataflow.analysis.FlowExpressions.ThisReference;
 import org.checkerframework.dataflow.analysis.RegularTransferResult;
+import org.checkerframework.dataflow.analysis.StoreSet;
 import org.checkerframework.dataflow.analysis.TransferFunction;
 import org.checkerframework.dataflow.analysis.TransferInput;
 import org.checkerframework.dataflow.analysis.TransferResult;
@@ -145,7 +146,7 @@ public abstract class CFAbstractTransfer<
      * transfer function. By default, the value is not changed but subclasses might decide to
      * implement some functionality. The store at this position is also passed.
      */
-    protected V finishValue(V value, S store) {
+    protected V finishValue(V value, StoreSet<S> store) {
         return value;
     }
 
@@ -155,7 +156,7 @@ public abstract class CFAbstractTransfer<
      * implement some functionality. The store at this position is also passed (two stores, as the
      * result is a {@link ConditionalTransferResult}.
      */
-    protected V finishValue(V value, S thenStore, S elseStore) {
+    protected V finishValue(V value, StoreSet<S> thenStore, StoreSet<S> elseStore) {
         return value;
     }
 
@@ -214,16 +215,16 @@ public abstract class CFAbstractTransfer<
         return analysis.createAbstractValue(annotatedValue.getAnnotations(), type);
     }
 
-    private S fixedInitialStore = null;
+    private StoreSet<S> fixedInitialStore = null;
 
     /** Set a fixed initial Store. */
-    public void setFixedInitialStore(S s) {
+    public void setFixedInitialStore(StoreSet<S> s) {
         fixedInitialStore = s;
     }
 
     /** The initial store maps method formal parameters to their currently most refined type. */
     @Override
-    public S initialStore(
+    public StoreSet<S> initialStore(
             UnderlyingAST underlyingAST, @Nullable List<LocalVariableNode> parameters) {
         if (underlyingAST.getKind() != Kind.LAMBDA && underlyingAST.getKind() != Kind.METHOD) {
             if (fixedInitialStore != null) {
@@ -233,7 +234,8 @@ public abstract class CFAbstractTransfer<
             }
         }
 
-        S info;
+        StoreSet<S> info;
+        StoreSet<S> newinfo = new StoreSet<>();
 
         if (underlyingAST.getKind() == Kind.METHOD) {
 
@@ -244,132 +246,141 @@ public abstract class CFAbstractTransfer<
                 info = analysis.createEmptyStore(sequentialSemantics);
             }
 
-            AnnotatedTypeFactory factory = analysis.getTypeFactory();
-            for (LocalVariableNode p : parameters) {
-                AnnotatedTypeMirror anno = factory.getAnnotatedType(p.getElement());
-                info.initializeMethodParameter(p, analysis.createAbstractValue(anno));
-            }
-
-            // add properties known through precondition
-            CFGMethod method = (CFGMethod) underlyingAST;
-            MethodTree methodTree = method.getMethod();
-            ExecutableElement methodElem = TreeUtils.elementFromDeclaration(methodTree);
-            addInformationFromPreconditions(info, factory, method, methodTree, methodElem);
-
-            final ClassTree classTree = method.getClassTree();
-            addFieldValues(info, factory, classTree, methodTree);
-
-            addFinalLocalValues(info, methodElem);
-
-            if (shouldPerformWholeProgramInference(methodTree, methodElem)) {
-                Map<AnnotatedDeclaredType, ExecutableElement> overriddenMethods =
-                        AnnotatedTypes.overriddenMethods(
-                                analysis.atypeFactory.getElementUtils(),
-                                analysis.atypeFactory,
-                                methodElem);
-                for (Map.Entry<AnnotatedDeclaredType, ExecutableElement> pair :
-                        overriddenMethods.entrySet()) {
-                    AnnotatedExecutableType overriddenMethod =
-                            AnnotatedTypes.asMemberOf(
-                                    analysis.atypeFactory.getProcessingEnv().getTypeUtils(),
-                                    analysis.atypeFactory,
-                                    pair.getKey(),
-                                    pair.getValue());
-
-                    // Infers parameter and receiver types of the method based
-                    // on the overridden method.
-                    analysis.atypeFactory
-                            .getWholeProgramInference()
-                            .updateFromOverride(
-                                    methodTree,
-                                    methodElem,
-                                    overriddenMethod,
-                                    analysis.getTypeFactory());
+            for (S s : info.getStores()) {
+                AnnotatedTypeFactory factory = analysis.getTypeFactory();
+                for (LocalVariableNode p : parameters) {
+                    AnnotatedTypeMirror anno = factory.getAnnotatedType(p.getElement());
+                    s.initializeMethodParameter(p, analysis.createAbstractValue(anno));
                 }
+
+                // add properties known through precondition
+                CFGMethod method = (CFGMethod) underlyingAST;
+                MethodTree methodTree = method.getMethod();
+                ExecutableElement methodElem = TreeUtils.elementFromDeclaration(methodTree);
+                addInformationFromPreconditions(s, factory, method, methodTree, methodElem);
+
+                final ClassTree classTree = method.getClassTree();
+                addFieldValues(s, factory, classTree, methodTree);
+
+                addFinalLocalValues(s, methodElem);
+
+                if (shouldPerformWholeProgramInference(methodTree, methodElem)) {
+                    Map<AnnotatedDeclaredType, ExecutableElement> overriddenMethods =
+                            AnnotatedTypes.overriddenMethods(
+                                    analysis.atypeFactory.getElementUtils(),
+                                    analysis.atypeFactory,
+                                    methodElem);
+                    for (Map.Entry<AnnotatedDeclaredType, ExecutableElement> pair :
+                            overriddenMethods.entrySet()) {
+                        AnnotatedExecutableType overriddenMethod =
+                                AnnotatedTypes.asMemberOf(
+                                        analysis.atypeFactory.getProcessingEnv().getTypeUtils(),
+                                        analysis.atypeFactory,
+                                        pair.getKey(),
+                                        pair.getValue());
+
+                        // Infers parameter and receiver types of the method based
+                        // on the overridden method.
+                        analysis.atypeFactory
+                                .getWholeProgramInference()
+                                .updateFromOverride(
+                                        methodTree,
+                                        methodElem,
+                                        overriddenMethod,
+                                        analysis.getTypeFactory());
+                    }
+                }
+                newinfo.add(s);
             }
 
         } else if (underlyingAST.getKind() == Kind.LAMBDA) {
             // Create a copy and keep only the field values (nothing else applies).
             info = analysis.createCopiedStore(fixedInitialStore);
-            // Allow that local variables are retained; they are effectively final,
-            // otherwise Java wouldn't allow access from within the lambda.
-            // TODO: what about the other information? Can code further down be simplified?
-            // info.localVariableValues.clear();
-            info.classValues.clear();
-            info.arrayValues.clear();
-            info.methodValues.clear();
 
-            AnnotatedTypeFactory factory = analysis.getTypeFactory();
-            for (LocalVariableNode p : parameters) {
-                AnnotatedTypeMirror anno = factory.getAnnotatedType(p.getElement());
-                info.initializeMethodParameter(p, analysis.createAbstractValue(anno));
-            }
+            for (S s : info.getStores()) {
+                // Allow that local variables are retained; they are effectively final,
+                // otherwise Java wouldn't allow access from within the lambda.
+                // TODO: what about the other information? Can code further down be simplified?
+                // info.localVariableValues.clear();
+                s.classValues.clear();
+                s.arrayValues.clear();
+                s.methodValues.clear();
 
-            CFGLambda lambda = (CFGLambda) underlyingAST;
-            Tree enclosingTree =
-                    TreeUtils.enclosingOfKind(
-                            factory.getPath(lambda.getLambdaTree()),
-                            new HashSet<>(
-                                    Arrays.asList(
-                                            Tree.Kind.METHOD,
-                                            // Tree.Kind for which TreeUtils.isClassTree is true
-                                            Tree.Kind.CLASS,
-                                            Tree.Kind.INTERFACE,
-                                            Tree.Kind.ANNOTATION_TYPE,
-                                            Tree.Kind.ENUM)));
-
-            Element enclosingElement = null;
-            if (enclosingTree.getKind() == Tree.Kind.METHOD) {
-                // If it is in an initializer, we need to use locals from the initializer.
-                enclosingElement = TreeUtils.elementFromTree(enclosingTree);
-
-            } else if (TreeUtils.isClassTree(enclosingTree)) {
-
-                // Try to find an enclosing initializer block
-                // Would love to know if there was a better way
-                // Find any enclosing element of the lambda (using trees)
-                // Then go up the elements to find an initializer element (which can't be found with
-                // the tree).
-                TreePath loopTree = factory.getPath(lambda.getLambdaTree()).getParentPath();
-                Element anEnclosingElement = null;
-                while (loopTree.getLeaf() != enclosingTree) {
-                    Element sym = TreeUtils.elementFromTree(loopTree.getLeaf());
-                    if (sym != null) {
-                        anEnclosingElement = sym;
-                        break;
-                    }
-                    loopTree = loopTree.getParentPath();
+                AnnotatedTypeFactory factory = analysis.getTypeFactory();
+                for (LocalVariableNode p : parameters) {
+                    AnnotatedTypeMirror anno = factory.getAnnotatedType(p.getElement());
+                    s.initializeMethodParameter(p, analysis.createAbstractValue(anno));
                 }
-                while (anEnclosingElement != null
-                        && !anEnclosingElement.equals(TreeUtils.elementFromTree(enclosingTree))) {
-                    if (anEnclosingElement.getKind() == ElementKind.INSTANCE_INIT
-                            || anEnclosingElement.getKind() == ElementKind.STATIC_INIT) {
-                        enclosingElement = anEnclosingElement;
-                        break;
-                    }
-                    anEnclosingElement = anEnclosingElement.getEnclosingElement();
-                }
-            }
-            if (enclosingElement != null) {
-                addFinalLocalValues(info, enclosingElement);
-            }
 
-            // We want the initialization stuff, but need to throw out any refinements.
-            Map<FieldAccess, V> fieldValuesClone = new HashMap<>(info.fieldValues);
-            for (Entry<FieldAccess, V> fieldValue : fieldValuesClone.entrySet()) {
-                AnnotatedTypeMirror declaredType =
-                        factory.getAnnotatedType(fieldValue.getKey().getField());
-                V lubbedValue =
-                        analysis.createAbstractValue(declaredType)
-                                .leastUpperBound(fieldValue.getValue());
-                info.fieldValues.put(fieldValue.getKey(), lubbedValue);
+                CFGLambda lambda = (CFGLambda) underlyingAST;
+                Tree enclosingTree =
+                        TreeUtils.enclosingOfKind(
+                                factory.getPath(lambda.getLambdaTree()),
+                                new HashSet<>(
+                                        Arrays.asList(
+                                                Tree.Kind.METHOD,
+                                                // Tree.Kind for which TreeUtils.isClassTree is true
+                                                Tree.Kind.CLASS,
+                                                Tree.Kind.INTERFACE,
+                                                Tree.Kind.ANNOTATION_TYPE,
+                                                Tree.Kind.ENUM)));
+
+                Element enclosingElement = null;
+                if (enclosingTree.getKind() == Tree.Kind.METHOD) {
+                    // If it is in an initializer, we need to use locals from the initializer.
+                    enclosingElement = TreeUtils.elementFromTree(enclosingTree);
+
+                } else if (TreeUtils.isClassTree(enclosingTree)) {
+
+                    // Try to find an enclosing initializer block
+                    // Would love to know if there was a better way
+                    // Find any enclosing element of the lambda (using trees)
+                    // Then go up the elements to find an initializer element (which can't be found
+                    // with
+                    // the tree).
+                    TreePath loopTree = factory.getPath(lambda.getLambdaTree()).getParentPath();
+                    Element anEnclosingElement = null;
+                    while (loopTree.getLeaf() != enclosingTree) {
+                        Element sym = TreeUtils.elementFromTree(loopTree.getLeaf());
+                        if (sym != null) {
+                            anEnclosingElement = sym;
+                            break;
+                        }
+                        loopTree = loopTree.getParentPath();
+                    }
+                    while (anEnclosingElement != null
+                            && !anEnclosingElement.equals(
+                                    TreeUtils.elementFromTree(enclosingTree))) {
+                        if (anEnclosingElement.getKind() == ElementKind.INSTANCE_INIT
+                                || anEnclosingElement.getKind() == ElementKind.STATIC_INIT) {
+                            enclosingElement = anEnclosingElement;
+                            break;
+                        }
+                        anEnclosingElement = anEnclosingElement.getEnclosingElement();
+                    }
+                }
+                if (enclosingElement != null) {
+                    addFinalLocalValues(s, enclosingElement);
+                }
+
+                // We want the initialization stuff, but need to throw out any refinements.
+                Map<FieldAccess, V> fieldValuesClone = new HashMap<>(s.fieldValues);
+                for (Entry<FieldAccess, V> fieldValue : fieldValuesClone.entrySet()) {
+                    AnnotatedTypeMirror declaredType =
+                            factory.getAnnotatedType(fieldValue.getKey().getField());
+                    V lubbedValue =
+                            analysis.createAbstractValue(declaredType)
+                                    .leastUpperBound(fieldValue.getValue());
+                    s.fieldValues.put(fieldValue.getKey(), lubbedValue);
+                }
+                newinfo.add(s);
             }
         } else {
             assert false : "Unexpected tree: " + underlyingAST;
-            info = null;
+            newinfo = null;
         }
 
-        return info;
+        return newinfo;
     }
 
     private void addFieldValues(
@@ -571,12 +582,12 @@ public abstract class CFAbstractTransfer<
         }
 
         if (in.containsTwoStores()) {
-            S thenStore = in.getThenStore();
-            S elseStore = in.getElseStore();
+            StoreSet<S> thenStore = in.getThenStore();
+            StoreSet<S> elseStore = in.getElseStore();
             return new ConditionalTransferResult<>(
                     finishValue(value, thenStore, elseStore), thenStore, elseStore);
         } else {
-            S info = in.getRegularStore();
+            StoreSet<S> info = in.getRegularStore();
             return new RegularTransferResult<>(finishValue(value, info), info);
         }
     }
@@ -599,19 +610,19 @@ public abstract class CFAbstractTransfer<
         }
 
         if (in.containsTwoStores()) {
-            S thenStore = in.getThenStore();
-            S elseStore = in.getElseStore();
+            StoreSet<S> thenStore = in.getThenStore();
+            StoreSet<S> elseStore = in.getElseStore();
             return new ConditionalTransferResult<>(
                     finishValue(value, thenStore, elseStore), thenStore, elseStore);
         } else {
-            S info = in.getRegularStore();
+            StoreSet<S> info = in.getRegularStore();
             return new RegularTransferResult<>(finishValue(value, info), info);
         }
     }
 
     @Override
     public TransferResult<V, S> visitFieldAccess(FieldAccessNode n, TransferInput<V, S> p) {
-        S store = p.getRegularStore();
+        StoreSet<S> store = p.getRegularStore();
         V storeValue = store.getValue(n);
         // look up value in factory, and take the more specific one
         // TODO: handle cases, where this is not allowed (e.g. constructors in
@@ -623,7 +634,7 @@ public abstract class CFAbstractTransfer<
 
     @Override
     public TransferResult<V, S> visitArrayAccess(ArrayAccessNode n, TransferInput<V, S> p) {
-        S store = p.getRegularStore();
+        StoreSet<S> store = p.getRegularStore();
         V storeValue = store.getValue(n);
         // look up value in factory, and take the more specific one
         V factoryValue = getValueFromFactory(n.getTree(), n);
@@ -634,7 +645,7 @@ public abstract class CFAbstractTransfer<
     /** Use the most specific type information available according to the store. */
     @Override
     public TransferResult<V, S> visitLocalVariable(LocalVariableNode n, TransferInput<V, S> in) {
-        S store = in.getRegularStore();
+        StoreSet<S> store = in.getRegularStore();
         V valueFromStore = store.getValue(n);
         V valueFromFactory = getValueFromFactory(n.getTree(), n);
         V value = moreSpecificValue(valueFromFactory, valueFromStore);
@@ -643,20 +654,27 @@ public abstract class CFAbstractTransfer<
 
     @Override
     public TransferResult<V, S> visitThisLiteral(ThisLiteralNode n, TransferInput<V, S> in) {
-        S store = in.getRegularStore();
-        V valueFromStore = store.getValue(n);
+        StoreSet<S> store = in.getRegularStore();
+        V val = null;
+        for (S s : store.getStores()) {
+            V valueFromStore = s.getValue(n);
 
-        V valueFromFactory = null;
-        V value = null;
-        Tree tree = n.getTree();
-        if (tree != null && TreeUtils.canHaveTypeAnnotation(tree)) {
-            valueFromFactory = getValueFromFactory(tree, n);
-        }
+            V valueFromFactory = null;
+            V value = null;
+            Tree tree = n.getTree();
+            if (tree != null && TreeUtils.canHaveTypeAnnotation(tree)) {
+                valueFromFactory = getValueFromFactory(tree, n);
+            }
 
-        if (valueFromFactory == null) {
-            value = valueFromStore;
-        } else {
-            value = moreSpecificValue(valueFromFactory, valueFromStore);
+            if (valueFromFactory == null) {
+                value = valueFromStore;
+            } else {
+                value = moreSpecificValue(valueFromFactory, valueFromStore);
+            }
+
+            if (value != null) {
+                val = value.leastUpperBound(val);
+            }
         }
 
         return new RegularTransferResult<>(finishValue(value, store), store);
@@ -667,7 +685,7 @@ public abstract class CFAbstractTransfer<
     public TransferResult<V, S> visitTernaryExpression(
             TernaryExpressionNode n, TransferInput<V, S> p) {
         TransferResult<V, S> result = super.visitTernaryExpression(n, p);
-        S store = result.getRegularStore();
+        StoreSet<S> store = result.getRegularStore();
         V thenValue = p.getValueOfSubNode(n.getThenOperand());
         V elseValue = p.getValueOfSubNode(n.getElseOperand());
         V resultValue = null;
@@ -681,8 +699,8 @@ public abstract class CFAbstractTransfer<
     @Override
     public TransferResult<V, S> visitConditionalNot(ConditionalNotNode n, TransferInput<V, S> p) {
         TransferResult<V, S> result = super.visitConditionalNot(n, p);
-        S thenStore = result.getThenStore();
-        S elseStore = result.getElseStore();
+        StoreSet<S> thenStore = result.getThenStore();
+        StoreSet<S> elseStore = result.getElseStore();
         return new ConditionalTransferResult<>(result.getResultValue(), elseStore, thenStore);
     }
 
@@ -749,12 +767,17 @@ public abstract class CFAbstractTransfer<
                     Receiver secondInternal =
                             FlowExpressions.internalReprOf(analysis.getTypeFactory(), secondPart);
                     if (CFAbstractStore.canInsertReceiver(secondInternal)) {
-                        S thenStore = res.getThenStore();
-                        S elseStore = res.getElseStore();
-                        if (notEqualTo) {
-                            elseStore.insertValue(secondInternal, firstValue);
-                        } else {
-                            thenStore.insertValue(secondInternal, firstValue);
+                        StoreSet<S> thenStore = res.getThenStore();
+                        StoreSet<S> elseStore = res.getElseStore();
+                        for (S s : thenStore.getStores()) {
+                            if (!notEqualTo) {
+                                s.insertValue(secondInternal, firstValue);
+                            }
+                        }
+                        for (S s : elseStore.getStores()) {
+                            if (notEqualTo) {
+                                s.insertValue(secondInternal, firstValue);
+                            }
                         }
                         // To handle `(a = b = c) == x`, repeat for all insertable receivers of
                         // splitted assignments instead of returning.
@@ -790,7 +813,7 @@ public abstract class CFAbstractTransfer<
         Node lhs = n.getTarget();
         Node rhs = n.getExpression();
 
-        S info = in.getRegularStore();
+        StoreSet<S> info = in.getRegularStore();
         V rhsValue = in.getValueOfSubNode(rhs);
 
         if (shouldPerformWholeProgramInference(n.getTree(), lhs.getTree())) {
@@ -821,7 +844,9 @@ public abstract class CFAbstractTransfer<
             }
         }
 
-        processCommonAssignment(in, lhs, rhs, info, rhsValue);
+        for (S s : info.getStores()) {
+            processCommonAssignment(in, lhs, rhs, s, rhsValue);
+        }
 
         return new RegularTransferResult<>(finishValue(rhsValue, info), info);
     }
@@ -875,7 +900,7 @@ public abstract class CFAbstractTransfer<
 
         // update the results store if the assignment target is something we can
         // process
-        S info = result.getRegularStore();
+        StoreSet<S> info = result.getRegularStore();
         // ResultValue is the type of LHS + RHS
         V resultValue = result.getResultValue();
 
@@ -891,7 +916,9 @@ public abstract class CFAbstractTransfer<
                             analysis.getTypeFactory());
         }
 
-        processCommonAssignment(in, lhs, rhs, info, resultValue);
+        for (S s : info.getStores()) {
+            processCommonAssignment(in, lhs, rhs, s, resultValue);
+        }
 
         return new RegularTransferResult<>(finishValue(resultValue, info), info);
     }
@@ -926,7 +953,7 @@ public abstract class CFAbstractTransfer<
     public TransferResult<V, S> visitMethodInvocation(
             MethodInvocationNode n, TransferInput<V, S> in) {
 
-        S store = in.getRegularStore();
+        StoreSet<S> store = in.getRegularStore();
         ExecutableElement method = n.getTarget().getMethod();
 
         V factoryValue = null;
@@ -936,20 +963,33 @@ public abstract class CFAbstractTransfer<
             // look up the value from factory
             factoryValue = getValueFromFactory(tree, n);
         }
-        // look up the value in the store (if possible)
-        V storeValue = store.getValue(n);
-        V resValue = moreSpecificValue(factoryValue, storeValue);
 
-        store.updateForMethodCall(n, analysis.atypeFactory, resValue);
+        V resValue = null;
+        StoreSet<S> thenStore = new StoreSet<>();
+        StoreSet<S> elseStore = new StoreSet<>();
 
-        // add new information based on postcondition
-        processPostconditions(n, store, method, tree);
+        for (S s : store.getStores()) {
+            // look up the value in the store (if possible)
+            V storeValue = s.getValue(n);
+            V resVal = moreSpecificValue(factoryValue, storeValue);
 
-        S thenStore = store;
-        S elseStore = thenStore.copy();
+            s.updateForMethodCall(n, analysis.atypeFactory, resValue);
 
-        // add new information based on conditional postcondition
-        processConditionalPostconditions(n, method, tree, thenStore, elseStore);
+            // add new information based on postcondition
+            processPostconditions(n, s, method, tree);
+
+            S thenS = s;
+            S elseS = thenS.copy();
+
+            // add new information based on conditional postcondition
+            processConditionalPostconditions(n, method, tree, thenS, elseS);
+
+            thenStore.add(thenS);
+            elseStore.add(elseS);
+            if (resVal != null) {
+                resValue = resVal.leastUpperBound(resValue);
+            }
+        }
 
         if (shouldPerformWholeProgramInference(n.getTree(), method)) {
             // Finds the receiver's type
@@ -1089,7 +1129,7 @@ public abstract class CFAbstractTransfer<
      */
     @Override
     public TransferResult<V, S> visitCase(CaseNode n, TransferInput<V, S> in) {
-        S store = in.getRegularStore();
+        StoreSet<S> store = in.getRegularStore();
         TransferResult<V, S> result =
                 new ConditionalTransferResult<>(
                         finishValue(null, store), in.getThenStore(), in.getElseStore(), false);
@@ -1097,9 +1137,10 @@ public abstract class CFAbstractTransfer<
         V caseValue = in.getValueOfSubNode(n.getCaseOperand());
         AssignmentNode assign = (AssignmentNode) n.getSwitchOperand();
         V switchValue =
-                store.getValue(
-                        FlowExpressions.internalReprOf(
-                                analysis.getTypeFactory(), assign.getTarget()));
+                store.getLeastUpperBoundofAllStores()
+                        .getValue(
+                                FlowExpressions.internalReprOf(
+                                        analysis.getTypeFactory(), assign.getTarget()));
         result =
                 strengthenAnnotationOfEqualTo(
                         result,
@@ -1156,7 +1197,7 @@ public abstract class CFAbstractTransfer<
     @Override
     public TransferResult<V, S> visitVariableDeclaration(
             VariableDeclarationNode n, TransferInput<V, S> p) {
-        S store = p.getRegularStore();
+        StoreSet<S> store = p.getRegularStore();
         return new RegularTransferResult<>(finishValue(null, store), store);
     }
 

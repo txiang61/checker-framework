@@ -12,6 +12,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.analysis.ConditionEvaluator;
+import org.checkerframework.dataflow.analysis.StoreSet;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.framework.source.SourceChecker;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
@@ -126,10 +127,10 @@ public abstract class CFAbstractAnalysis<
     }
 
     /** @return an empty store of the appropriate type */
-    public abstract S createEmptyStore(boolean sequentialSemantics);
+    public abstract StoreSet<S> createEmptyStore(boolean sequentialSemantics);
 
     /** @return an identical copy of the store {@code s}. */
-    public abstract S createCopiedStore(S s);
+    public abstract StoreSet<S> createCopiedStore(StoreSet<S> s);
 
     /**
      * Creates an abstract value from the annotated type mirror. The value contains the set of

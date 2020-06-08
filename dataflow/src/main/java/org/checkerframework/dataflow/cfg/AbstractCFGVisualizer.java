@@ -16,6 +16,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.AbstractValue;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.analysis.Store;
+import org.checkerframework.dataflow.analysis.StoreSet;
 import org.checkerframework.dataflow.analysis.TransferFunction;
 import org.checkerframework.dataflow.analysis.TransferInput;
 import org.checkerframework.dataflow.cfg.block.Block;
@@ -199,12 +200,12 @@ public abstract class AbstractCFGVisualizer<
                 Node lastNode = getLastNode(bb);
                 if (lastNode != null) {
                     @SuppressWarnings("nullness:contracts.precondition.not.satisfied")
-                    S store = analysis.getResult().getStoreAfter(lastNode);
+                    StoreSet<S> store = analysis.getResult().getStoreAfter(lastNode);
                     StringBuilder sbStore = new StringBuilder();
                     sbStore.append(escapeString).append("~~~~~~~~~").append(escapeString);
                     sbStore.append("After: ");
                     if (store != null) {
-                        sbStore.append(visualizeStore(store));
+                        sbStore.append(visualizeStore(store.getLeastUpperBoundofAllStores()));
                     } else {
                         sbStore.append("null store");
                     }
@@ -281,15 +282,15 @@ public abstract class AbstractCFGVisualizer<
         // Split input representation to two lines.
         sbStore.append("Before: ");
         if (!input.containsTwoStores()) {
-            S regularStore = input.getRegularStore();
-            sbStore.append(visualizeStore(regularStore));
+            StoreSet<S> regularStore = input.getRegularStore();
+            sbStore.append(visualizeStore(regularStore.getLeastUpperBoundofAllStores()));
         } else {
-            S thenStore = input.getThenStore();
+            StoreSet<S> thenStore = input.getThenStore();
             sbStore.append("then=");
-            sbStore.append(visualizeStore(thenStore));
-            S elseStore = input.getElseStore();
+            sbStore.append(visualizeStore(thenStore.getLeastUpperBoundofAllStores()));
+            StoreSet<S> elseStore = input.getElseStore();
             sbStore.append(", else=");
-            sbStore.append(visualizeStore(elseStore));
+            sbStore.append(visualizeStore(elseStore.getLeastUpperBoundofAllStores()));
         }
         sbStore.append(escapeString).append("~~~~~~~~~").append(escapeString);
         return sbStore.toString();

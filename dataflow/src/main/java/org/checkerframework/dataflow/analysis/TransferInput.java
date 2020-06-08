@@ -1,7 +1,6 @@
 package org.checkerframework.dataflow.analysis;
 
 import java.util.Objects;
-import java.util.Set;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.cfg.node.Node;
 
@@ -29,7 +28,7 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * store == null &hArr; thenStore != null &amp;&amp; elseStore != null
      * </code></pre>
      */
-    protected final @Nullable Set<S> store;
+    protected final @Nullable StoreSet<S> store;
 
     /**
      * The 'then' result store (or {@code null} if none is present). The following invariant is
@@ -39,7 +38,7 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * store == null &hArr; thenStore != null &amp;&amp; elseStore != null
      * </code></pre>
      */
-    protected final @Nullable Set<S> thenStore;
+    protected final @Nullable StoreSet<S> thenStore;
 
     /**
      * The 'else' result store (or {@code null} if none is present). The following invariant is
@@ -49,7 +48,7 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * store == null &hArr; thenStore != null &amp;&amp; elseStore != null
      * </code></pre>
      */
-    protected final @Nullable Set<S> elseStore;
+    protected final @Nullable StoreSet<S> elseStore;
 
     /** The corresponding analysis class to get intermediate flow results. */
     protected final Analysis<A, S, ?> analysis;
@@ -86,7 +85,7 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * <p>The node-value mapping {@code nodeValues} is provided by the analysis and is only read
      * from within this {@link TransferInput}.
      */
-    public TransferInput(@Nullable Node n, Analysis<A, S, ?> analysis, S s) {
+    public TransferInput(@Nullable Node n, Analysis<A, S, ?> analysis, StoreSet<S> s) {
         node = n;
         this.analysis = analysis;
         store = s;
@@ -99,7 +98,8 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * <p><em>Aliasing</em>: The two stores {@code s1} and {@code s2} will be stored internally and
      * are not allowed to be used elsewhere. Full control of them is transferred to this object.
      */
-    public TransferInput(@Nullable Node n, Analysis<A, S, ?> analysis, S s1, S s2) {
+    public TransferInput(
+            @Nullable Node n, Analysis<A, S, ?> analysis, StoreSet<S> s1, StoreSet<S> s2) {
         node = n;
         this.analysis = analysis;
         thenStore = s1;
@@ -142,7 +142,7 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * @return the regular result store produced if no exception is thrown by the {@link Node}
      *     corresponding to this transfer function result
      */
-    public S getRegularStore() {
+    public StoreSet<S> getRegularStore() {
         if (store == null) {
             assert thenStore != null && elseStore != null : "@AssumeAssertion(nullness): invariant";
             return thenStore.leastUpperBound(elseStore);
@@ -155,7 +155,7 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * @return the result store produced if the {@link Node} this result belongs to evaluates to
      *     {@code true}.
      */
-    public S getThenStore() {
+    public StoreSet<S> getThenStore() {
         if (store == null) {
             assert thenStore != null : "@AssumeAssertion(nullness): invariant";
             return thenStore;
@@ -167,7 +167,7 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      * @return the result store produced if the {@link Node} this result belongs to evaluates to
      *     {@code false}.
      */
-    public S getElseStore() {
+    public StoreSet<S> getElseStore() {
         if (store == null) {
             assert elseStore != null : "@AssumeAssertion(nullness): invariant";
             return elseStore;
@@ -203,8 +203,8 @@ public class TransferInput<A extends AbstractValue<A>, S extends Store<S>> {
      */
     public TransferInput<A, S> leastUpperBound(TransferInput<A, S> other) {
         if (store == null) {
-            S newThenStore = getThenStore().leastUpperBound(other.getThenStore());
-            S newElseStore = getElseStore().leastUpperBound(other.getElseStore());
+            StoreSet<S> newThenStore = getThenStore().leastUpperBound(other.getThenStore());
+            StoreSet<S> newElseStore = getElseStore().leastUpperBound(other.getElseStore());
             return new TransferInput<>(node, analysis, newThenStore, newElseStore);
         } else {
             if (other.store == null) {
