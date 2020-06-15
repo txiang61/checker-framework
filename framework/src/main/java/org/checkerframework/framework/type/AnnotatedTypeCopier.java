@@ -108,7 +108,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedDeclaredType copy = (AnnotatedDeclaredType) makeCopy(original);
+        final AnnotatedDeclaredType copy = makeCopy(original);
         originalToCopy.put(original, copy);
 
         if (original.wasRaw()) {
@@ -139,7 +139,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedIntersectionType copy = (AnnotatedIntersectionType) makeCopy(original);
+        final AnnotatedIntersectionType copy = makeCopy(original);
         originalToCopy.put(original, copy);
 
         if (original.supertypes != null) {
@@ -161,7 +161,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedUnionType copy = (AnnotatedUnionType) makeCopy(original);
+        final AnnotatedUnionType copy = makeCopy(original);
         originalToCopy.put(original, copy);
 
         if (original.alternatives != null) {
@@ -183,7 +183,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedExecutableType copy = (AnnotatedExecutableType) makeCopy(original);
+        final AnnotatedExecutableType copy = makeCopy(original);
         originalToCopy.put(original, copy);
 
         copy.setElement(original.getElement());
@@ -225,7 +225,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedArrayType copy = (AnnotatedArrayType) makeCopy(original);
+        final AnnotatedArrayType copy = makeCopy(original);
         originalToCopy.put(original, copy);
 
         copy.setComponentType(visit(original.getComponentType(), originalToCopy));
@@ -241,7 +241,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedTypeVariable copy = (AnnotatedTypeVariable) makeCopy(original);
+        final AnnotatedTypeVariable copy = makeCopy(original);
         originalToCopy.put(original, copy);
 
         if (original.getUpperBoundField() != null) {
