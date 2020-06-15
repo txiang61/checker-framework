@@ -104,12 +104,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedDeclaredType copy =
-                (AnnotatedDeclaredType)
-                        AnnotatedTypeMirror.createType(
-                                original.getUnderlyingType(),
-                                original.atypeFactory,
-                                original.isDeclaration());
+        final AnnotatedDeclaredType copy = (AnnotatedDeclaredType) makeCopy(original);
         maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
@@ -141,12 +136,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedIntersectionType copy =
-                (AnnotatedIntersectionType)
-                        AnnotatedTypeMirror.createType(
-                                original.getUnderlyingType(),
-                                original.atypeFactory,
-                                original.isDeclaration());
+        final AnnotatedIntersectionType copy = (AnnotatedIntersectionType) makeCopy(original);
         maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
@@ -169,12 +159,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedUnionType copy =
-                (AnnotatedUnionType)
-                        AnnotatedTypeMirror.createType(
-                                original.getUnderlyingType(),
-                                original.atypeFactory,
-                                original.isDeclaration());
+        final AnnotatedUnionType copy = (AnnotatedUnionType) makeCopy(original);
         maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
@@ -197,12 +182,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedExecutableType copy =
-                (AnnotatedExecutableType)
-                        AnnotatedTypeMirror.createType(
-                                original.getUnderlyingType(),
-                                original.atypeFactory,
-                                original.isDeclaration());
+        final AnnotatedExecutableType copy = (AnnotatedExecutableType) makeCopy(original);
         maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
@@ -245,12 +225,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedArrayType copy =
-                (AnnotatedArrayType)
-                        AnnotatedTypeMirror.createType(
-                                original.getUnderlyingType(),
-                                original.atypeFactory,
-                                original.isDeclaration());
+        final AnnotatedArrayType copy = (AnnotatedArrayType) makeCopy(original);
         maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
@@ -267,13 +242,7 @@ public class AnnotatedTypeCopier
             return originalToCopy.get(original);
         }
 
-        final AnnotatedTypeVariable copy =
-                (AnnotatedTypeVariable)
-                        AnnotatedTypeMirror.createType(
-                                original.getUnderlyingType(),
-                                original.atypeFactory,
-                                original.isDeclaration());
-        maybeCopyPrimaryAnnotations(original, copy);
+        final AnnotatedTypeVariable copy = (AnnotatedTypeVariable) makeCopy(original);
         originalToCopy.put(original, copy);
 
         if (original.getUpperBoundField() != null) {
