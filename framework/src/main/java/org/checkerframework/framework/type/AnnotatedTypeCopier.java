@@ -21,9 +21,9 @@ import org.checkerframework.framework.type.visitor.AnnotatedTypeVisitor;
  * lazily initialized fields. That is, if a field has already been initialized, it will be
  * initialized in the copied type.
  *
- * <p>When making copies, a map of encountered {@literal references &rArr; copied} types is
- * maintained. This ensures that, if a reference appears in multiple locations in the original type,
- * a corresponding copy of the original type appears in the same locations in the output copy. This
+ * <p>When making copies, a map of encountered {@literal references => copied} types is maintained.
+ * This ensures that, if a reference appears in multiple locations in the original type, a
+ * corresponding copy of the original type appears in the same locations in the output copy. This
  * ensures that the recursive loops in the input type are preserved in its output copy (see
  * makeOrReturnCopy)
  *
@@ -52,7 +52,11 @@ public class AnnotatedTypeCopier
      */
     protected boolean visitingExecutableTypeParam = false;
 
-    /** @see #AnnotatedTypeCopier(boolean) */
+    /**
+     * See {@link #AnnotatedTypeCopier(boolean)}.
+     *
+     * @see #AnnotatedTypeCopier(boolean)
+     */
     protected final boolean copyAnnotations;
 
     /**
@@ -105,7 +109,6 @@ public class AnnotatedTypeCopier
         }
 
         final AnnotatedDeclaredType copy = (AnnotatedDeclaredType) makeCopy(original);
-        maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
         if (original.wasRaw()) {
@@ -137,7 +140,6 @@ public class AnnotatedTypeCopier
         }
 
         final AnnotatedIntersectionType copy = (AnnotatedIntersectionType) makeCopy(original);
-        maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
         if (original.supertypes != null) {
@@ -160,7 +162,6 @@ public class AnnotatedTypeCopier
         }
 
         final AnnotatedUnionType copy = (AnnotatedUnionType) makeCopy(original);
-        maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
         if (original.alternatives != null) {
@@ -183,7 +184,6 @@ public class AnnotatedTypeCopier
         }
 
         final AnnotatedExecutableType copy = (AnnotatedExecutableType) makeCopy(original);
-        maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
         copy.setElement(original.getElement());
@@ -226,7 +226,6 @@ public class AnnotatedTypeCopier
         }
 
         final AnnotatedArrayType copy = (AnnotatedArrayType) makeCopy(original);
-        maybeCopyPrimaryAnnotations(original, copy);
         originalToCopy.put(original, copy);
 
         copy.setComponentType(visit(original.getComponentType(), originalToCopy));
