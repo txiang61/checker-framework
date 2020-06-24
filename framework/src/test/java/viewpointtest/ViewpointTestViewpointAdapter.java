@@ -1,16 +1,18 @@
 package viewpointtest;
 
-import static viewpointtest.ViewpointTestAnnotationHolder.RECEIVERDEPENDANTQUAL;
-import static viewpointtest.ViewpointTestAnnotationHolder.TOP;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeKind;
 import org.checkerframework.framework.type.AbstractViewpointAdapter;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
+import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.AnnotationUtils;
+import viewpointtest.quals.ReceiverDependantQual;
+import viewpointtest.quals.Top;
 
 public class ViewpointTestViewpointAdapter extends AbstractViewpointAdapter {
+
+    private final AnnotationMirror TOP, RECEIVERDEPENDANTQUAL;
 
     /**
      * The class constructor.
@@ -19,6 +21,10 @@ public class ViewpointTestViewpointAdapter extends AbstractViewpointAdapter {
      */
     public ViewpointTestViewpointAdapter(AnnotatedTypeFactory atypeFactory) {
         super(atypeFactory);
+        TOP = AnnotationBuilder.fromClass(atypeFactory.getElementUtils(), Top.class);
+        RECEIVERDEPENDANTQUAL =
+                AnnotationBuilder.fromClass(
+                        atypeFactory.getElementUtils(), ReceiverDependantQual.class);
     }
 
     @Override
