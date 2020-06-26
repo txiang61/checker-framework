@@ -10,54 +10,6 @@ public class DivideByZeroTest {
         String s = "hello";
     }
 
-    public static void g(int y) {
-        if (y == 0) {
-            // :: warning: (divide.by.zero)
-            int x = 1 / y;
-        } else {
-            int x = 1 / y;
-        }
-
-        if (y != 0) {
-            int x = 1 / y;
-        } else {
-            // :: warning: (divide.by.zero)
-            int x = 1 / y;
-        }
-
-        if (!(y == 0)) {
-            int x = 1 / y;
-        } else {
-            // :: warning: (divide.by.zero)
-            int x = 1 / y;
-        }
-
-        if (!(y != 0)) {
-            // :: warning: (divide.by.zero)
-            int x = 1 / y;
-        } else {
-            int x = 1 / y;
-        }
-
-        if (y < 0) {
-            int x = 1 / y;
-        }
-
-        if (y <= 0) {
-            // :: warning: (divide.by.zero)
-            int x = 1 / y;
-        }
-
-        if (y > 0) {
-            int x = 1 / y;
-        }
-
-        if (y >= 0) {
-            // :: warning: (divide.by.zero)
-            int x = 1 / y;
-        }
-    }
-
     public static void h() {
         int zero_the_hard_way = 0 + 0 - 0 * 0;
         // :: warning: (divide.by.zero)
