@@ -359,7 +359,7 @@ public class ValueVisitor extends BaseTypeVisitor<ValueAnnotatedTypeFactory> {
                                 || AnnotationUtils.areSameByClass(rightAnno, IntVal.class))) {
                     Range range = ValueAnnotatedTypeFactory.getRange(rightAnno);
                     if (range.contains(0)) {
-                        checker.reportWarning(node, "divide.by.zero");
+                        checker.reportWarning(node, "divide.by.zero", rightAnno);
                     }
                 }
             }
