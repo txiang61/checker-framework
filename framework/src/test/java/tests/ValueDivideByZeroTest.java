@@ -16,7 +16,6 @@ public class ValueDivideByZeroTest extends FrameworkPerDirectoryTest {
                 org.checkerframework.common.value.ValueChecker.class,
                 "value",
                 "-Anomsgtext",
-                "-Astubs=statically-executable.astub",
                 "-A" + ValueChecker.REPORT_EVAL_WARNS,
                 "-A" + ValueChecker.DIVIDE_BY_ZERO);
     }

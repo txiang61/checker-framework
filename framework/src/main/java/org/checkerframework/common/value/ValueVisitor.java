@@ -31,11 +31,13 @@ import org.checkerframework.javacutil.TypesUtils;
 /** Visitor for the Constant Value type system. */
 public class ValueVisitor extends BaseTypeVisitor<ValueAnnotatedTypeFactory> {
 
+    /** Should we check for possible divide by zero error, or ignore it? */
     boolean divideByZeroCheck = false;
 
+    /** Create a value visitor and sets the flag for divide by zero check. */
     public ValueVisitor(BaseTypeChecker checker) {
         super(checker);
-        divideByZeroCheck = checker.hasOption(ValueChecker.DIVIDE_BY_ZERO);
+        divideByZeroCheck = checker.hasOption(ValueChecker.DIVIDE_BY_ZERO_CHECK);
     }
 
     /**
