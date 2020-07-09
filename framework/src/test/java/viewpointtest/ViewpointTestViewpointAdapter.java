@@ -1,7 +1,6 @@
 package viewpointtest;
 
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.type.TypeKind;
 import org.checkerframework.framework.type.AbstractViewpointAdapter;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
@@ -30,16 +29,6 @@ public class ViewpointTestViewpointAdapter extends AbstractViewpointAdapter {
     @Override
     protected AnnotationMirror extractAnnotationMirror(AnnotatedTypeMirror atm) {
         return atm.getAnnotationInHierarchy(TOP);
-    }
-
-    @Override
-    protected AnnotatedTypeMirror combineTypeWithType(
-            AnnotatedTypeMirror receiver, AnnotatedTypeMirror declared) {
-        // skip method decl
-        if (declared.getKind() == TypeKind.EXECUTABLE) {
-            return declared;
-        }
-        return super.combineTypeWithType(receiver, declared);
     }
 
     @Override
