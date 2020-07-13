@@ -22,6 +22,6 @@ public class ValueDivideByZeroTest extends FrameworkPerDirectoryTest {
 
     @Parameters
     public static String[] getTestDirs() {
-        return new String[] {"value", "all-systems", "value-divide-by-zero"};
+        return new String[] {"all-systems", "value-divide-by-zero"};
     }
 }
