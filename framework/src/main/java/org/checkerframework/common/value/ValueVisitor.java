@@ -34,7 +34,8 @@ public class ValueVisitor extends BaseTypeVisitor<ValueAnnotatedTypeFactory> {
     /** Should we check for possible divide by zero error, or ignore it? */
     boolean divideByZeroCheck = false;
 
-    /** Create a value visitor and sets the flag for divide by zero check. 
+    /**
+     * Create a value visitor and sets the flag for divide by zero check.
      *
      * @param checker the type-checker associated with this visitor
      */
