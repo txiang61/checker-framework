@@ -17,7 +17,7 @@ public class ValueDivideByZeroTest extends FrameworkPerDirectoryTest {
                 "value",
                 "-Anomsgtext",
                 "-A" + ValueChecker.REPORT_EVAL_WARNS,
-                "-A" + ValueChecker.DIVIDE_BY_ZERO);
+                "-A" + ValueChecker.DIVIDE_BY_ZERO_CHECK);
     }
 
     @Parameters
