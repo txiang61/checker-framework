@@ -32,7 +32,7 @@ import org.checkerframework.javacutil.TypesUtils;
 public class ValueVisitor extends BaseTypeVisitor<ValueAnnotatedTypeFactory> {
 
     /** Should we check for possible divide by zero error, or ignore it? */
-    boolean divideByZeroCheck = false;
+    private final boolean divideByZeroCheck;
 
     /**
      * Create a value visitor and sets the flag for divide by zero check.
