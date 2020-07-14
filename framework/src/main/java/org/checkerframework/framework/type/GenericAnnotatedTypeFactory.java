@@ -38,6 +38,7 @@ import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.dataflow.analysis.AnalysisResult;
+import org.checkerframework.dataflow.analysis.ConditionEvaluator;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
 import org.checkerframework.dataflow.analysis.FlowExpressions.FieldAccess;
 import org.checkerframework.dataflow.analysis.FlowExpressions.LocalVariable;
@@ -415,6 +416,48 @@ public abstract class GenericAnnotatedTypeFactory<
             tmp.add(Pair.of(fieldVal.first, (CFValue) fieldVal.second));
         }
         return (FlowAnalysis) new CFAnalysis(checker, (GenericAnnotatedTypeFactory) this, tmp);
+    }
+
+    /**
+     * Returns the appropriate condition evaluator class that is used for the
+     * org.checkerframework.dataflow condition evaluator
+     *
+     * <p>This implementation uses the checker naming convention to create the appropriate analysis.
+     * If no transfer function is found, it returns an instance of {@link ConditionEvaluator}.
+     *
+     * <p>Subclasses have to override this method to create the appropriate analysis if they do not
+     * follow the checker naming convention.
+     *
+     * @param analysis
+     * @return
+     */
+    public ConditionEvaluator<Value, Store> createFlowConditionalEvaluator(
+            CFAbstractAnalysis<Value, Store, TransferFunction> analysis) {
+
+        // Try to reflectively load the visitor.
+        Class<?> checkerClass = checker.getClass();
+
+        while (checkerClass != BaseTypeChecker.class) {
+            final String classToLoad =
+                    checkerClass
+                            .getName()
+                            .replace("Checker", "ConditionEvaluator")
+                            .replace("Subchecker", "ConditionEvaluator");
+            ConditionEvaluator<Value, Store> result =
+                    BaseTypeChecker.invokeConstructorFor(
+                            classToLoad,
+                            new Class<?>[] {analysis.getClass()},
+                            new Object[] {analysis});
+            if (result != null) {
+                return result;
+            }
+            checkerClass = checkerClass.getSuperclass();
+        }
+
+        // If a conditional evaluator couldn't be loaded reflectively, return the
+        // default.
+        ConditionEvaluator<Value, Store> ret = new ConditionEvaluator<Value, Store>();
+        return ret;
     }
 
     /**

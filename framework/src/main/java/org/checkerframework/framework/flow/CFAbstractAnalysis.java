@@ -10,6 +10,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
+import org.checkerframework.dataflow.analysis.ConditionEvaluator;
 import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.framework.source.SourceChecker;
@@ -111,6 +112,15 @@ public abstract class CFAbstractAnalysis<
 
     public List<Pair<VariableElement, V>> getFieldValues() {
         return fieldValues;
+    }
+
+    /**
+     * Returns the condition evaluator to be used by the analysis
+     *
+     * @return the conditional evaluation result used by the analysis
+     */
+    public ConditionEvaluator<V, S> createConditionEvaluator() {
+        return atypeFactory.createFlowConditionalEvaluator(this);
     }
 
     /**

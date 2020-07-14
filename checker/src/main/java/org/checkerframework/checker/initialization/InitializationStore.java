@@ -184,6 +184,7 @@ public class InitializationStore<V extends CFAbstractValue<V>, S extends Initial
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public S leastUpperBound(S other) {
         // Remove invariant annotated fields to avoid performance issue reported in #1438.

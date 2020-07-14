@@ -86,6 +86,15 @@ public class LiveVarStore implements Store<LiveVarStore> {
         }
     }
 
+    /**
+     * Since we can't evaluate whether the branch is dead or not during Backward Analysis, this
+     * function will always be false.
+     */
+    @Override
+    public boolean isDeadBranch() {
+        return false;
+    }
+
     @Override
     public boolean equals(@Nullable Object obj) {
         if (!(obj instanceof LiveVarStore)) {
