@@ -428,8 +428,8 @@ public abstract class GenericAnnotatedTypeFactory<
      * <p>Subclasses have to override this method to create the appropriate analysis if they do not
      * follow the checker naming convention.
      *
-     * @param analysis
-     * @return
+     * @param analysis the appropriate analysis
+     * @return a condition evaluator
      */
     public ConditionEvaluator<Value, Store> createFlowConditionalEvaluator(
             CFAbstractAnalysis<Value, Store, TransferFunction> analysis) {

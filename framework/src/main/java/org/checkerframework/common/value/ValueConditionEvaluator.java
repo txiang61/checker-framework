@@ -8,8 +8,6 @@ import org.checkerframework.common.value.qual.IntRangeFromPositive;
 import org.checkerframework.common.value.qual.IntVal;
 import org.checkerframework.common.value.util.Range;
 import org.checkerframework.dataflow.analysis.ConditionEvaluator;
-import org.checkerframework.dataflow.analysis.FlowExpressions;
-import org.checkerframework.dataflow.analysis.FlowExpressions.Receiver;
 import org.checkerframework.dataflow.analysis.TransferInput;
 import org.checkerframework.dataflow.cfg.node.EqualToNode;
 import org.checkerframework.dataflow.cfg.node.GreaterThanNode;
@@ -38,10 +36,10 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
     @Override
     public ConditionalFlow visitGreaterThan(
             GreaterThanNode node, TransferInput<CFValue, CFStore> in) {
-        Receiver leftRec = FlowExpressions.internalReprOf(atypefactory, node.getLeftOperand());
-        Receiver rightRec = FlowExpressions.internalReprOf(atypefactory, node.getRightOperand());
-        AnnotationMirror leftAm = getValueAnnotation(in.getRegularStore().getValue(leftRec));
-        AnnotationMirror rightAm = getValueAnnotation(in.getRegularStore().getValue(rightRec));
+        CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
+        CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
+        AnnotationMirror leftAm = getValueAnnotation(leftValue);
+        AnnotationMirror rightAm = getValueAnnotation(rightValue);
         if (isIntRangeOrIntVal(leftAm) && isIntRangeOrIntVal(rightAm)) {
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
@@ -57,10 +55,10 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
     @Override
     public ConditionalFlow visitGreaterThanOrEqual(
             GreaterThanOrEqualNode node, TransferInput<CFValue, CFStore> in) {
-        Receiver leftRec = FlowExpressions.internalReprOf(atypefactory, node.getLeftOperand());
-        Receiver rightRec = FlowExpressions.internalReprOf(atypefactory, node.getRightOperand());
-        AnnotationMirror leftAm = getValueAnnotation(in.getRegularStore().getValue(leftRec));
-        AnnotationMirror rightAm = getValueAnnotation(in.getRegularStore().getValue(rightRec));
+        CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
+        CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
+        AnnotationMirror leftAm = getValueAnnotation(leftValue);
+        AnnotationMirror rightAm = getValueAnnotation(rightValue);
         if (isIntRangeOrIntVal(leftAm) && isIntRangeOrIntVal(rightAm)) {
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
@@ -76,10 +74,10 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
     @Override
     public ConditionalFlow visitLessThanOrEqual(
             LessThanOrEqualNode node, TransferInput<CFValue, CFStore> in) {
-        Receiver leftRec = FlowExpressions.internalReprOf(atypefactory, node.getLeftOperand());
-        Receiver rightRec = FlowExpressions.internalReprOf(atypefactory, node.getRightOperand());
-        AnnotationMirror leftAm = getValueAnnotation(in.getRegularStore().getValue(leftRec));
-        AnnotationMirror rightAm = getValueAnnotation(in.getRegularStore().getValue(rightRec));
+        CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
+        CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
+        AnnotationMirror leftAm = getValueAnnotation(leftValue);
+        AnnotationMirror rightAm = getValueAnnotation(rightValue);
         if (isIntRangeOrIntVal(leftAm) && isIntRangeOrIntVal(rightAm)) {
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
@@ -94,22 +92,10 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
 
     @Override
     public ConditionalFlow visitLessThan(LessThanNode node, TransferInput<CFValue, CFStore> in) {
-        Receiver leftRec = FlowExpressions.internalReprOf(atypefactory, node.getLeftOperand());
-        Receiver rightRec = FlowExpressions.internalReprOf(atypefactory, node.getRightOperand());
-        AnnotationMirror leftAm = getValueAnnotation(in.getRegularStore().getValue(leftRec));
-        AnnotationMirror rightAm = getValueAnnotation(in.getRegularStore().getValue(rightRec));
-        if (isIntRangeOrIntVal(leftAm) && isIntRangeOrIntVal(rightAm)) {
-            Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
-            Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
-            if (leftRange.to < rightRange.from) {
-                return ConditionalFlow.THEN;
-            } else if (leftRange.from >= rightRange.to) {
-                return ConditionalFlow.ELSE;
-            }
-        }
-
-        leftAm = getValueAnnotation(in.getElseStore().getValue(leftRec));
-        rightAm = getValueAnnotation(in.getElseStore().getValue(rightRec));
+        CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
+        CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
+        AnnotationMirror leftAm = getValueAnnotation(leftValue);
+        AnnotationMirror rightAm = getValueAnnotation(rightValue);
         if (isIntRangeOrIntVal(leftAm) && isIntRangeOrIntVal(rightAm)) {
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
@@ -125,14 +111,16 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
 
     @Override
     public ConditionalFlow visitEqualTo(EqualToNode node, TransferInput<CFValue, CFStore> in) {
-        Receiver leftRec = FlowExpressions.internalReprOf(atypefactory, node.getLeftOperand());
-        Receiver rightRec = FlowExpressions.internalReprOf(atypefactory, node.getRightOperand());
-        AnnotationMirror leftAm = getValueAnnotation(in.getRegularStore().getValue(leftRec));
-        AnnotationMirror rightAm = getValueAnnotation(in.getRegularStore().getValue(rightRec));
+        CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
+        CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
+        AnnotationMirror leftAm = getValueAnnotation(leftValue);
+        AnnotationMirror rightAm = getValueAnnotation(rightValue);
         if (isIntRangeOrIntVal(leftAm) && isIntRangeOrIntVal(rightAm)) {
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
-            if (leftRange.to == rightRange.to && leftRange.from == rightRange.from) {
+            if (leftRange.to == leftRange.from
+                    && leftRange.to == rightRange.to
+                    && leftRange.from == rightRange.from) {
                 return ConditionalFlow.THEN;
             } else if (leftRange.to < rightRange.from || rightRange.to < leftRange.from) {
                 return ConditionalFlow.ELSE;
@@ -143,14 +131,16 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
 
     @Override
     public ConditionalFlow visitNotEqual(NotEqualNode node, TransferInput<CFValue, CFStore> in) {
-        Receiver leftRec = FlowExpressions.internalReprOf(atypefactory, node.getLeftOperand());
-        Receiver rightRec = FlowExpressions.internalReprOf(atypefactory, node.getRightOperand());
-        AnnotationMirror leftAm = getValueAnnotation(in.getRegularStore().getValue(leftRec));
-        AnnotationMirror rightAm = getValueAnnotation(in.getRegularStore().getValue(rightRec));
+        CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
+        CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
+        AnnotationMirror leftAm = getValueAnnotation(leftValue);
+        AnnotationMirror rightAm = getValueAnnotation(rightValue);
         if (isIntRangeOrIntVal(leftAm) && isIntRangeOrIntVal(rightAm)) {
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
-            if (leftRange.to == rightRange.to && leftRange.from == rightRange.from) {
+            if (leftRange.to == leftRange.from
+                    && leftRange.to == rightRange.to
+                    && leftRange.from == rightRange.from) {
                 return ConditionalFlow.ELSE;
             } else if (leftRange.to < rightRange.from || rightRange.to < leftRange.from) {
                 return ConditionalFlow.THEN;
