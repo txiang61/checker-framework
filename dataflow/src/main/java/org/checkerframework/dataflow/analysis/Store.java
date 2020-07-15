@@ -41,15 +41,6 @@ public interface Store<S extends Store<S>> {
      */
     public boolean isDeadBranch();
 
-    //    /**
-    //     * Set the flag to true if the branch is evaluated to be dead.
-    //     * If the flag is set to true, this store will not be merged.
-    //     * The flag should be defaulted to false.
-    //     *
-    //     * @param flag indicate whether this store should be merged
-    //     */
-    //    public void setDeadBranch(boolean flag);
-
     /**
      * Returns an exact copy of this store.
      *
