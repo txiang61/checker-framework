@@ -31,7 +31,7 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitNode(Node node, TransferInput<V, S> in) {
+    private ConditionalFlow visitNode(Node node, TransferInput<V, S> in) {
         if (node instanceof GreaterThanNode) {
             return visitGreaterThan((GreaterThanNode) node, in);
         }

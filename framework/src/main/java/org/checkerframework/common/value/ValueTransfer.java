@@ -17,7 +17,6 @@ import org.checkerframework.common.value.qual.StringVal;
 import org.checkerframework.common.value.util.NumberMath;
 import org.checkerframework.common.value.util.NumberUtils;
 import org.checkerframework.common.value.util.Range;
-import org.checkerframework.dataflow.analysis.ConditionEvaluator.ConditionalFlow;
 import org.checkerframework.dataflow.analysis.ConditionalTransferResult;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
 import org.checkerframework.dataflow.analysis.FlowExpressions.Receiver;
@@ -31,7 +30,6 @@ import org.checkerframework.dataflow.cfg.node.BitwiseXorNode;
 import org.checkerframework.dataflow.cfg.node.ConditionalAndNode;
 import org.checkerframework.dataflow.cfg.node.ConditionalNotNode;
 import org.checkerframework.dataflow.cfg.node.ConditionalOrNode;
-import org.checkerframework.dataflow.cfg.node.EqualToNode;
 import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
 import org.checkerframework.dataflow.cfg.node.FloatingDivisionNode;
 import org.checkerframework.dataflow.cfg.node.FloatingRemainderNode;
@@ -45,7 +43,6 @@ import org.checkerframework.dataflow.cfg.node.LessThanOrEqualNode;
 import org.checkerframework.dataflow.cfg.node.MethodAccessNode;
 import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.dataflow.cfg.node.NotEqualNode;
 import org.checkerframework.dataflow.cfg.node.NumericalAdditionNode;
 import org.checkerframework.dataflow.cfg.node.NumericalMinusNode;
 import org.checkerframework.dataflow.cfg.node.NumericalMultiplicationNode;
@@ -76,15 +73,12 @@ public class ValueTransfer extends CFTransfer {
     protected final ValueAnnotatedTypeFactory atypefactory;
     /** The Value qualifier hierarchy. */
     protected final QualifierHierarchy hierarchy;
-    /** The Condition Evaluator. */
-    private final ValueConditionEvaluator condition_eval;
 
     /** Create a new ValueTransfer. */
     public ValueTransfer(CFAbstractAnalysis<CFValue, CFStore, CFTransfer> analysis) {
         super(analysis);
         atypefactory = (ValueAnnotatedTypeFactory) analysis.getTypeFactory();
         hierarchy = atypefactory.getQualifierHierarchy();
-        condition_eval = (ValueConditionEvaluator) analysis.createConditionEvaluator();
     }
 
     /** Returns a range of possible lengths for an integer from a range, as casted to a String. */
@@ -1357,12 +1351,6 @@ public class ValueTransfer extends CFTransfer {
         TransferResult<CFValue, CFStore> transferResult = super.visitLessThan(n, p);
         CFStore thenStore = transferResult.getThenStore();
         CFStore elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitLessThan(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
-        }
         List<Boolean> resultValues =
                 calculateBinaryComparison(
                         n.getLeftOperand(),
@@ -1382,12 +1370,6 @@ public class ValueTransfer extends CFTransfer {
         TransferResult<CFValue, CFStore> transferResult = super.visitLessThanOrEqual(n, p);
         CFStore thenStore = transferResult.getThenStore();
         CFStore elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitLessThanOrEqual(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
-        }
         List<Boolean> resultValues =
                 calculateBinaryComparison(
                         n.getLeftOperand(),
@@ -1407,12 +1389,6 @@ public class ValueTransfer extends CFTransfer {
         TransferResult<CFValue, CFStore> transferResult = super.visitGreaterThan(n, p);
         CFStore thenStore = transferResult.getThenStore();
         CFStore elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitGreaterThan(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
-        }
         List<Boolean> resultValues =
                 calculateBinaryComparison(
                         n.getLeftOperand(),
@@ -1432,12 +1408,6 @@ public class ValueTransfer extends CFTransfer {
         TransferResult<CFValue, CFStore> transferResult = super.visitGreaterThanOrEqual(n, p);
         CFStore thenStore = transferResult.getThenStore();
         CFStore elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitGreaterThanOrEqual(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
-        }
         List<Boolean> resultValues =
                 calculateBinaryComparison(
                         n.getLeftOperand(),
@@ -1445,56 +1415,6 @@ public class ValueTransfer extends CFTransfer {
                         n.getRightOperand(),
                         p.getValueOfSubNode(n.getRightOperand()),
                         ComparisonOperators.GREATER_THAN_EQ,
-                        thenStore,
-                        elseStore);
-        TypeMirror underlyingType = transferResult.getResultValue().getUnderlyingType();
-        return createNewResultBoolean(thenStore, elseStore, resultValues, underlyingType);
-    }
-
-    @Override
-    public TransferResult<CFValue, CFStore> visitEqualTo(
-            EqualToNode n, TransferInput<CFValue, CFStore> p) {
-        TransferResult<CFValue, CFStore> transferResult = super.visitEqualTo(n, p);
-        CFStore thenStore = transferResult.getThenStore();
-        CFStore elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitEqualTo(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
-        }
-        List<Boolean> resultValues =
-                calculateBinaryComparison(
-                        n.getLeftOperand(),
-                        p.getValueOfSubNode(n.getLeftOperand()),
-                        n.getRightOperand(),
-                        p.getValueOfSubNode(n.getRightOperand()),
-                        ComparisonOperators.EQUAL,
-                        thenStore,
-                        elseStore);
-        TypeMirror underlyingType = transferResult.getResultValue().getUnderlyingType();
-        return createNewResultBoolean(thenStore, elseStore, resultValues, underlyingType);
-    }
-
-    @Override
-    public TransferResult<CFValue, CFStore> visitNotEqual(
-            NotEqualNode n, TransferInput<CFValue, CFStore> p) {
-        TransferResult<CFValue, CFStore> transferResult = super.visitNotEqual(n, p);
-        CFStore thenStore = transferResult.getThenStore();
-        CFStore elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitNotEqual(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
-        }
-        List<Boolean> resultValues =
-                calculateBinaryComparison(
-                        n.getLeftOperand(),
-                        p.getValueOfSubNode(n.getLeftOperand()),
-                        n.getRightOperand(),
-                        p.getValueOfSubNode(n.getRightOperand()),
-                        ComparisonOperators.NOT_EQUAL,
                         thenStore,
                         elseStore);
         TypeMirror underlyingType = transferResult.getResultValue().getUnderlyingType();

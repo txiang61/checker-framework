@@ -21,6 +21,8 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.dataflow.analysis.ConditionEvaluator;
+import org.checkerframework.dataflow.analysis.ConditionEvaluator.ConditionalFlow;
 import org.checkerframework.dataflow.analysis.ConditionalTransferResult;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
 import org.checkerframework.dataflow.analysis.FlowExpressions.ClassName;
@@ -41,10 +43,16 @@ import org.checkerframework.dataflow.cfg.node.ArrayAccessNode;
 import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.CaseNode;
 import org.checkerframework.dataflow.cfg.node.ClassNameNode;
+import org.checkerframework.dataflow.cfg.node.ConditionalAndNode;
 import org.checkerframework.dataflow.cfg.node.ConditionalNotNode;
+import org.checkerframework.dataflow.cfg.node.ConditionalOrNode;
 import org.checkerframework.dataflow.cfg.node.EqualToNode;
 import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
+import org.checkerframework.dataflow.cfg.node.GreaterThanNode;
+import org.checkerframework.dataflow.cfg.node.GreaterThanOrEqualNode;
 import org.checkerframework.dataflow.cfg.node.LambdaResultExpressionNode;
+import org.checkerframework.dataflow.cfg.node.LessThanNode;
+import org.checkerframework.dataflow.cfg.node.LessThanOrEqualNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.NarrowingConversionNode;
@@ -107,10 +115,14 @@ public abstract class CFAbstractTransfer<
     /** Indicates that the whole-program inference is on. */
     private final boolean infer;
 
+    /** The Condition Evaluator. */
+    private final ConditionEvaluator<V, S> condition_eval;
+
     protected CFAbstractTransfer(CFAbstractAnalysis<V, S, T> analysis) {
         this.analysis = analysis;
         this.sequentialSemantics = !analysis.checker.hasOption("concurrentSemantics");
         this.infer = analysis.checker.hasOption("infer");
+        this.condition_eval = analysis.createConditionEvaluator();
     }
 
     /**
@@ -128,6 +140,7 @@ public abstract class CFAbstractTransfer<
         this.sequentialSemantics =
                 !(forceConcurrentSemantics || analysis.checker.hasOption("concurrentSemantics"));
         this.infer = analysis.checker.hasOption("infer");
+        this.condition_eval = analysis.createConditionEvaluator();
     }
 
     /**
@@ -685,13 +698,108 @@ public abstract class CFAbstractTransfer<
         return new RegularTransferResult<>(finishValue(resultValue, store), store);
     }
 
+    @Override
+    public TransferResult<V, S> visitGreaterThan(GreaterThanNode n, TransferInput<V, S> p) {
+        TransferResult<V, S> transferResult = super.visitGreaterThan(n, p);
+        S thenStore = transferResult.getThenStore();
+        S elseStore = transferResult.getElseStore();
+        ConditionalFlow flow = condition_eval.visitGreaterThan(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+        return new ConditionalTransferResult<>(
+                transferResult.getResultValue(), thenStore, elseStore);
+    }
+
+    @Override
+    public TransferResult<V, S> visitGreaterThanOrEqual(
+            GreaterThanOrEqualNode n, TransferInput<V, S> p) {
+        TransferResult<V, S> transferResult = super.visitGreaterThanOrEqual(n, p);
+        S thenStore = transferResult.getThenStore();
+        S elseStore = transferResult.getElseStore();
+        ConditionalFlow flow = condition_eval.visitGreaterThanOrEqual(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+        return new ConditionalTransferResult<>(
+                transferResult.getResultValue(), thenStore, elseStore);
+    }
+
+    @Override
+    public TransferResult<V, S> visitLessThan(LessThanNode n, TransferInput<V, S> p) {
+        TransferResult<V, S> transferResult = super.visitLessThan(n, p);
+        S thenStore = transferResult.getThenStore();
+        S elseStore = transferResult.getElseStore();
+        ConditionalFlow flow = condition_eval.visitLessThan(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+        return new ConditionalTransferResult<>(
+                transferResult.getResultValue(), thenStore, elseStore);
+    }
+
+    @Override
+    public TransferResult<V, S> visitLessThanOrEqual(LessThanOrEqualNode n, TransferInput<V, S> p) {
+        TransferResult<V, S> transferResult = super.visitLessThanOrEqual(n, p);
+        S thenStore = transferResult.getThenStore();
+        S elseStore = transferResult.getElseStore();
+        ConditionalFlow flow = condition_eval.visitLessThanOrEqual(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+        return new ConditionalTransferResult<>(
+                transferResult.getResultValue(), thenStore, elseStore);
+    }
+
     /** Reverse the role of the 'thenStore' and 'elseStore'. */
     @Override
     public TransferResult<V, S> visitConditionalNot(ConditionalNotNode n, TransferInput<V, S> p) {
         TransferResult<V, S> result = super.visitConditionalNot(n, p);
         S thenStore = result.getThenStore();
         S elseStore = result.getElseStore();
+        ConditionalFlow flow = condition_eval.visitConditionalNot(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            thenStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            elseStore.setDeadBranch(true);
+        }
         return new ConditionalTransferResult<>(result.getResultValue(), elseStore, thenStore);
+    }
+
+    @Override
+    public TransferResult<V, S> visitConditionalAnd(ConditionalAndNode n, TransferInput<V, S> p) {
+        TransferResult<V, S> result = super.visitConditionalAnd(n, p);
+        S thenStore = result.getThenStore();
+        S elseStore = result.getElseStore();
+        ConditionalFlow flow = condition_eval.visitConditionalAnd(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+        return new ConditionalTransferResult<>(result.getResultValue(), thenStore, elseStore);
+    }
+
+    @Override
+    public TransferResult<V, S> visitConditionalOr(ConditionalOrNode n, TransferInput<V, S> p) {
+        TransferResult<V, S> result = super.visitConditionalOr(n, p);
+        S thenStore = result.getThenStore();
+        S elseStore = result.getElseStore();
+        ConditionalFlow flow = condition_eval.visitConditionalOr(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+        return new ConditionalTransferResult<>(result.getResultValue(), thenStore, elseStore);
     }
 
     @Override
@@ -707,7 +815,17 @@ public abstract class CFAbstractTransfer<
         // sides (and add it to the store if possible)
         res = strengthenAnnotationOfEqualTo(res, leftN, rightN, leftV, rightV, false);
         res = strengthenAnnotationOfEqualTo(res, rightN, leftN, rightV, leftV, false);
-        return res;
+
+        S thenStore = res.getThenStore();
+        S elseStore = res.getElseStore();
+        ConditionalFlow flow = condition_eval.visitEqualTo(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+
+        return new ConditionalTransferResult<>(res.getResultValue(), thenStore, elseStore);
     }
 
     @Override
@@ -724,7 +842,16 @@ public abstract class CFAbstractTransfer<
         res = strengthenAnnotationOfEqualTo(res, leftN, rightN, leftV, rightV, true);
         res = strengthenAnnotationOfEqualTo(res, rightN, leftN, rightV, leftV, true);
 
-        return res;
+        S thenStore = res.getThenStore();
+        S elseStore = res.getElseStore();
+        ConditionalFlow flow = condition_eval.visitNotEqual(n, p);
+        if (flow == ConditionalFlow.THEN) {
+            elseStore.setDeadBranch(true);
+        } else if (flow == ConditionalFlow.ELSE) {
+            thenStore.setDeadBranch(true);
+        }
+
+        return new ConditionalTransferResult<>(res.getResultValue(), thenStore, elseStore);
     }
 
     /**
