@@ -21,8 +21,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.checkerframework.dataflow.analysis.ConditionEvaluator;
-import org.checkerframework.dataflow.analysis.ConditionEvaluator.ConditionalFlow;
 import org.checkerframework.dataflow.analysis.ConditionalTransferResult;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
 import org.checkerframework.dataflow.analysis.FlowExpressions.ClassName;
@@ -583,13 +581,6 @@ public abstract class CFAbstractTransfer<
         if (in.containsTwoStores()) {
             S thenStore = in.getThenStore();
             S elseStore = in.getElseStore();
-            ConditionEvaluator<V, S> eval = analysis.createConditionEvaluator();
-            ConditionalFlow flow = eval.visitNode(n, in);
-            if (flow == ConditionalFlow.THEN) {
-                elseStore.setDeadBranch(true);
-            } else if (flow == ConditionalFlow.ELSE) {
-                thenStore.setDeadBranch(true);
-            }
             return new ConditionalTransferResult<>(
                     finishValue(value, thenStore, elseStore), thenStore, elseStore);
         } else {

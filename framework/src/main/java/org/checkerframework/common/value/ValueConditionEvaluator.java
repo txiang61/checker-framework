@@ -149,7 +149,12 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
         return super.visitNotEqual(node, in);
     }
 
-    /** Returns true if this node is annotated with {@code @IntRange} and {@code @IntVal}. */
+    /**
+     * Returns true if this node is annotated with {@code @IntRange} and {@code @IntVal}.
+     *
+     * @param am the annotation mirror
+     * @return true if the annotation mirror is a integer
+     */
     private boolean isIntRangeOrIntVal(AnnotationMirror am) {
         return AnnotationUtils.areSameByClass(am, IntVal.class)
                 || AnnotationUtils.areSameByClass(am, IntRange.class)

@@ -844,6 +844,11 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         return thisValue;
     }
 
+    /**
+     * Sets the dead branch flag. If flag is true, then the store is in a dead branch.
+     *
+     * @param flag set the dead branch flag
+     */
     public void setDeadBranch(boolean flag) {
         deadBranch = flag;
     }
@@ -860,7 +865,9 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     @SuppressWarnings("unchecked")
     @Override
     public S copy() {
-        return analysis.createCopiedStore((S) this);
+        S store = analysis.createCopiedStore((S) this);
+        store.setDeadBranch(this.isDeadBranch());
+        return store;
     }
 
     @SuppressWarnings("unchecked")
