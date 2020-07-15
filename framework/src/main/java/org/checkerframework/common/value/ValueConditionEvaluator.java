@@ -23,11 +23,16 @@ import org.checkerframework.framework.type.QualifierHierarchy;
 import org.checkerframework.javacutil.AnnotationUtils;
 
 public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore> {
-
+    /** The Value type factory. */
     protected final ValueAnnotatedTypeFactory atypefactory;
-
+    /** The Value qualifier hierarchy. */
     protected final QualifierHierarchy hierarchy;
 
+    /**
+     * Create a new Value condition evaluator
+     *
+     * @param analysis the appropriate analysis
+     */
     public ValueConditionEvaluator(CFAbstractAnalysis<CFValue, CFStore, CFTransfer> analysis) {
         this.atypefactory = (ValueAnnotatedTypeFactory) analysis.getTypeFactory();
         this.hierarchy = atypefactory.getQualifierHierarchy();
@@ -156,6 +161,9 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
      * @return true if the annotation mirror is a integer
      */
     private boolean isIntRangeOrIntVal(AnnotationMirror am) {
+        if (am == null) {
+            return false;
+        }
         return AnnotationUtils.areSameByClass(am, IntVal.class)
                 || AnnotationUtils.areSameByClass(am, IntRange.class)
                 || AnnotationUtils.areSameByClass(am, IntRangeFromPositive.class)

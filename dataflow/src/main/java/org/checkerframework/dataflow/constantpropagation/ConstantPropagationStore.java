@@ -18,6 +18,7 @@ public class ConstantPropagationStore implements Store<ConstantPropagationStore>
     /** Indicate whether this store is in a dead branch or not. */
     private boolean deadBranch = false;
 
+    /** Create a new Constant Propagation Store. */
     public ConstantPropagationStore() {
         contents = new HashMap<>();
     }
@@ -51,6 +52,11 @@ public class ConstantPropagationStore implements Store<ConstantPropagationStore>
         contents.put(n, val);
     }
 
+    /**
+     * Sets the dead branch flag. If flag is true, then the store is in a dead branch.
+     *
+     * @param flag set the dead branch flag
+     */
     public void setDeadBranch(boolean flag) {
         deadBranch = flag;
     }
