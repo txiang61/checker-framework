@@ -438,14 +438,9 @@ public abstract class GenericAnnotatedTypeFactory<
         Class<?> checkerClass = checker.getClass();
 
         while (checkerClass != BaseTypeChecker.class) {
-            final String classToLoad =
-                    checkerClass
-                            .getName()
-                            .replace("Checker", "ConditionEvaluator")
-                            .replace("Subchecker", "ConditionEvaluator");
             ConditionEvaluator<Value, Store> result =
                     BaseTypeChecker.invokeConstructorFor(
-                            classToLoad,
+                            BaseTypeChecker.getRelatedClassName(checkerClass, "ConditionEvaluator"),
                             new Class<?>[] {analysis.getClass()},
                             new Object[] {analysis});
             if (result != null) {
