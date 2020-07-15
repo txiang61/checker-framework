@@ -22,6 +22,7 @@ import org.checkerframework.framework.flow.CFValue;
 import org.checkerframework.framework.type.QualifierHierarchy;
 import org.checkerframework.javacutil.AnnotationUtils;
 
+/** The condition evaluator class for the Value Checker. */
 public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore> {
     /** The Value type factory. */
     protected final ValueAnnotatedTypeFactory atypefactory;
