@@ -31,6 +31,7 @@ import org.checkerframework.javacutil.UserError;
  * annotations and their representation as {@link AnnotatedTypeMirror}s.
  */
 public class CFCFGBuilder extends CFGBuilder {
+    /** This class should never be instantiated. Protected to still allow subclasses. */
     protected CFCFGBuilder() {}
 
     /** Build the control flow graph of some code. */
@@ -71,10 +72,10 @@ public class CFCFGBuilder extends CFGBuilder {
         ExpressionTree detail = tree.getDetail();
         if (detail != null) {
             String msg = detail.toString();
-            Collection<String> warningKeys = checker.getSuppressWarningsKeys();
-            for (String warningKey : warningKeys) {
-                String key = "@AssumeAssertion(" + warningKey + ")";
-                if (msg.contains(key)) {
+            Collection<String> prefixes = checker.getSuppressWarningsPrefixes();
+            for (String prefix : prefixes) {
+                String assumeAssert = "@AssumeAssertion(" + prefix + ")";
+                if (msg.contains(assumeAssert)) {
                     return true;
                 }
             }

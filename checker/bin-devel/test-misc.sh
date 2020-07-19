@@ -6,20 +6,10 @@ set -o xtrace
 export SHELLOPTS
 echo "SHELLOPTS=${SHELLOPTS}"
 
-if [ -d "/tmp/plume-scripts" ] ; then
-  (cd /tmp/plume-scripts && git pull -q)
-else
-  (cd /tmp && git clone --depth 1 -q https://github.com/plume-lib/plume-scripts.git)
-fi
-
-export CHECKERFRAMEWORK="${CHECKERFRAMEWORK:-$(pwd -P)}"
-echo "CHECKERFRAMEWORK=$CHECKERFRAMEWORK"
-
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-echo "BUILDJDK=${BUILDJDK}"
 # In newer shellcheck than 0.6.0, pass: "-P SCRIPTDIR" (literally)
 # shellcheck disable=SC1090
-source "$SCRIPTDIR"/build.sh "${BUILDJDK}"
+source "$SCRIPTDIR"/build.sh
 
 
 # Code style and formatting
@@ -31,14 +21,15 @@ source "$SCRIPTDIR"/build.sh "${BUILDJDK}"
 # HTML legality
 ./gradlew htmlValidate --console=plain --warning-mode=all --no-daemon
 
-# Documentation
-./gradlew javadoc --console=plain --warning-mode=all --no-daemon
-
-./gradlew javadocPrivate --console=plain --warning-mode=all --no-daemon
-make -C docs/manual all
-
-(./gradlew requireJavadocPrivate --console=plain --warning-mode=all --no-daemon > /tmp/warnings-rjp.txt 2>&1) || true
-/tmp/plume-scripts/ci-lint-diff /tmp/warnings-rjp.txt
-
+# Javadoc documentation
+status=0
+./gradlew javadoc --console=plain --warning-mode=all --no-daemon || status=1
+./gradlew javadocPrivate --console=plain --warning-mode=all --no-daemon || status=1
+(./gradlew requireJavadoc --console=plain --warning-mode=all --no-daemon > /tmp/warnings-rjp.txt 2>&1) || true
+/tmp/"$USER"/plume-scripts/ci-lint-diff /tmp/warnings-rjp.txt || status=1
 (./gradlew javadocDoclintAll --console=plain --warning-mode=all --no-daemon > /tmp/warnings-jda.txt 2>&1) || true
-/tmp/plume-scripts/ci-lint-diff /tmp/warnings-jda.txt
+/tmp/"$USER"/plume-scripts/ci-lint-diff /tmp/warnings-jda.txt || status=1
+if [ $status -ne 0 ]; then exit $status; fi
+
+# User documentation
+make -C docs/manual all

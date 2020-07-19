@@ -52,6 +52,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import javax.tools.Diagnostic.Kind;
 import org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
@@ -70,7 +71,7 @@ import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.node.ObjectCreationNode;
-import org.checkerframework.framework.source.Result;
+import org.checkerframework.framework.source.DiagMessage;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.util.dependenttypes.DependentTypesError;
 import org.checkerframework.javacutil.ElementUtils;
@@ -167,7 +168,7 @@ public class FlowExpressionParseUtil {
 
     /**
      * A visitor class that converts a JavaParser {@link Expression} to a {@link
-     * FlowExpressionContext#receiver}.
+     * FlowExpressions.Receiver}.
      */
     private static class ExpressionToReceiverVisitor
             extends GenericVisitorWithDefaults<Receiver, FlowExpressionContext> {
@@ -225,7 +226,11 @@ public class FlowExpressionParseUtil {
             return new ValueLiteral(stringTM, expr.asString());
         }
 
-        /** @return the receiver, {@link FlowExpressionContext#receiver}, of the context */
+        /**
+         * Returns the receiver, {@link FlowExpressionContext#receiver}, of the context.
+         *
+         * @return the receiver, {@link FlowExpressionContext#receiver}, of the context
+         */
         @Override
         public Receiver visit(ThisExpr n, FlowExpressionContext context) {
             if (context.receiver != null && !context.receiver.containsUnknown()) {
@@ -235,7 +240,11 @@ public class FlowExpressionParseUtil {
             return new ThisReference(context.receiver == null ? null : context.receiver.getType());
         }
 
-        /** @return the receiver of the superclass of the context */
+        /**
+         * Returns the receiver of the superclass of the context.
+         *
+         * @return the receiver of the superclass of the context
+         */
         @Override
         public Receiver visit(SuperExpr n, FlowExpressionContext context) {
             // super literal
@@ -263,7 +272,11 @@ public class FlowExpressionParseUtil {
             return expr.getInner().accept(this, context);
         }
 
-        /** @return the receiver of an array access */
+        /**
+         * Returns the receiver of an array access.
+         *
+         * @return the receiver of an array access
+         */
         @Override
         public Receiver visit(ArrayAccessExpr expr, FlowExpressionContext context) {
             Receiver array = expr.getName().accept(this, context);
@@ -456,7 +469,7 @@ public class FlowExpressionParseUtil {
             // can override, rather than halting parsing which the user cannot override.
             /*if (!PurityUtils.isDeterministic(context.checkerContext.getAnnotationProvider(),
                     methodElement)) {
-                throw new FlowExpressionParseException(Result.failure(
+                throw new FlowExpressionParseException(new DiagMessage(ERROR,
                         "flowexpr.method.not.deterministic",
                         methodElement.getSimpleName()));
             }*/
@@ -516,6 +529,9 @@ public class FlowExpressionParseUtil {
         }
 
         /**
+         * Returns a NameExpr to be handled by NameExpr visitor or a FieldAccessExpr to be handled
+         * by FieldAccess visitor.
+         *
          * @param expr a Class Literal
          * @return a NameExpr to be handled by NameExpr visitor or a FieldAccessExpr to be handled
          *     by FieldAccess visitor
@@ -605,6 +621,8 @@ public class FlowExpressionParseUtil {
         }
 
         /**
+         * Returns the receiver of the passed String name.
+         *
          * @param s a String representing an identifier (name expression, no dots in it)
          * @return the receiver of the passed String name
          */
@@ -639,6 +657,8 @@ public class FlowExpressionParseUtil {
         }
 
         /**
+         * Returns the receiver of the parameter passed.
+         *
          * @param s a String that starts with PARAMETER_REPLACEMENT
          * @return the receiver of the parameter passed
          */
@@ -664,10 +684,12 @@ public class FlowExpressionParseUtil {
     }
 
     /**
-     * @return a list of 1-based indices of all formal parameters that occur in {@code s}. Each
-     *     formal parameter occurs in s as a string like "#1" or "#4". This routine does not do
-     *     proper parsing; for instance, if "#2" appears within a string in s, then 2 would still be
-     *     in the result list.
+     * Returns a list of 1-based indices of all formal parameters that occur in {@code s}. Each
+     * formal parameter occurs in s as a string like "#1" or "#4". This routine does not do proper
+     * parsing; for instance, if "#2" appears within a string in s, then 2 would still be in the
+     * result list.
+     *
+     * @return a list of 1-based indices of all formal parameters that occur in {@code s}.
      */
     public static List<Integer> parameterIndices(String s) {
         List<Integer> result = new ArrayList<>();
@@ -835,8 +857,11 @@ public class FlowExpressionParseUtil {
         }
 
         /**
+         * Returns a {@link FlowExpressionContext} for the class {@code classTree} as seen at the
+         * class declaration.
+         *
          * @return a {@link FlowExpressionContext} for the class {@code classTree} as seen at the
-         *     class declaration.
+         *     class declaration
          */
         public static FlowExpressionContext buildContextForClassDeclaration(
                 ClassTree classTree, BaseContext checkerContext) {
@@ -852,9 +877,10 @@ public class FlowExpressionParseUtil {
         }
 
         /**
+         * Returns a {@link FlowExpressionContext} for the method {@code methodInvocation}
+         * (represented as a {@link Node} as seen at the method use (i.e., at a method call site).
+         *
          * @return a {@link FlowExpressionContext} for the method {@code methodInvocation}
-         *     (represented as a {@link Node} as seen at the method use (i.e., at a method call
-         *     site).
          */
         public static FlowExpressionContext buildContextForMethodUse(
                 MethodInvocationNode methodInvocation, BaseContext checkerContext) {
@@ -874,9 +900,11 @@ public class FlowExpressionParseUtil {
         }
 
         /**
+         * Returns a {@link FlowExpressionContext} for the method {@code methodInvocation}
+         * (represented as a {@link MethodInvocationTree} as seen at the method use (i.e., at a
+         * method call site).
+         *
          * @return a {@link FlowExpressionContext} for the method {@code methodInvocation}
-         *     (represented as a {@link MethodInvocationTree} as seen at the method use (i.e., at a
-         *     method call site).
          */
         public static FlowExpressionContext buildContextForMethodUse(
                 MethodInvocationTree methodInvocation, BaseContext checkerContext) {
@@ -904,8 +932,11 @@ public class FlowExpressionParseUtil {
         }
 
         /**
+         * Returns a {@link FlowExpressionContext} for the constructor {@code n} (represented as a
+         * {@link Node} as seen at the method use (i.e., at a method call site).
+         *
          * @return a {@link FlowExpressionContext} for the constructor {@code n} (represented as a
-         *     {@link Node} as seen at the method use (i.e., at a method call site).
+         *     {@link Node} as seen at the method use (i.e., at a method call site)
          */
         public static FlowExpressionContext buildContextForNewClassUse(
                 ObjectCreationNode n, BaseContext checkerContext) {
@@ -1052,8 +1083,8 @@ public class FlowExpressionParseUtil {
     ///
 
     /**
-     * An exception that indicates a parse error. Call {@link #getResult} to obtain a {@link Result}
-     * that can be used for error reporting.
+     * An exception that indicates a parse error. Call {@link #getDiagMessage} to obtain a {@link
+     * DiagMessage} that can be used for error reporting.
      */
     public static class FlowExpressionParseException extends Exception {
         private static final long serialVersionUID = 2L;
@@ -1076,9 +1107,13 @@ public class FlowExpressionParseUtil {
             return errorKey + " " + Arrays.toString(args);
         }
 
-        /** Return a Result that can be used for error reporting. */
-        public Result getResult() {
-            return Result.failure(errorKey, args);
+        /**
+         * Return a DiagMessage that can be used for error reporting.
+         *
+         * @return a DiagMessage that can be used for error reporting
+         */
+        public DiagMessage getDiagMessage() {
+            return new DiagMessage(Kind.ERROR, errorKey, args);
         }
 
         public boolean isFlowParseError() {

@@ -76,7 +76,7 @@ public class I18nFormatterAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     /**
      * Builds a map from a translation file key to its value in the file.
      *
-     * @return Map from a translation file key to its value in the file
+     * @return a map from a translation file key to its value in the file
      */
     private Map<String, String> buildLookup() {
         Map<String, String> result = new HashMap<>();
@@ -111,8 +111,7 @@ public class I18nFormatterAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
 
                         if (in == null) {
                             System.err.println("Couldn't find the properties file: " + name);
-                            // report(Result.failure("propertykeychecker.filenotfound", name),
-                            // null);
+                            // report(null, "propertykeychecker.filenotfound", name);
                             // return Collections.emptySet();
                             continue;
                         }
