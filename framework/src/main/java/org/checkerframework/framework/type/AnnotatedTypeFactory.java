@@ -44,6 +44,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -67,7 +68,9 @@ import org.checkerframework.common.wholeprograminference.WholeProgramInferenceSc
 import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.qual.FieldInvariant;
 import org.checkerframework.framework.qual.FromStubFile;
+import org.checkerframework.framework.qual.HasQualifierParameter;
 import org.checkerframework.framework.qual.InheritedAnnotation;
+import org.checkerframework.framework.qual.NoQualifierParameter;
 import org.checkerframework.framework.qual.PolymorphicQualifier;
 import org.checkerframework.framework.qual.SubtypeOf;
 import org.checkerframework.framework.source.SourceChecker;
@@ -80,6 +83,7 @@ import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedNullType
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedPrimitiveType;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedTypeVariable;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedWildcardType;
+import org.checkerframework.framework.type.visitor.AnnotatedTypeCombiner;
 import org.checkerframework.framework.util.AnnotatedTypes;
 import org.checkerframework.framework.util.AnnotationFormatter;
 import org.checkerframework.framework.util.CFContext;
@@ -172,8 +176,8 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
     /** Represent the type relations. */
     protected TypeHierarchy typeHierarchy;
 
-    /** performs whole program inference. */
-    private WholeProgramInference wholeProgramInference;
+    /** Performs whole-program inference. If null, whole-program inference is disabled. */
+    private final @Nullable WholeProgramInference wholeProgramInference;
 
     /** Viewpoint adapter used to perform viewpoint adaptation */
     protected ViewpointAdapter viewpointAdapter;
@@ -323,8 +327,11 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
     /** AnnotationClassLoader used to load type annotation classes via reflective lookup. */
     protected AnnotationClassLoader loader;
 
-    /** Indicates that the whole-program inference is on. */
-    private final boolean infer;
+    /**
+     * Which whole-program inference output format to use, if doing whole-program inference. This
+     * variable would be final, but it is not set unless WPI is enabled.
+     */
+    private WholeProgramInference.OutputFormat wpiOutputFormat;
 
     /**
      * Should results be cached? This means that ATM.deepCopy() will be called. ATM.deepCopy() used
@@ -445,13 +452,32 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
         this.typeFormatter = createAnnotatedTypeFormatter();
         this.annotationFormatter = createAnnotationFormatter();
 
-        infer = checker.hasOption("infer");
-        if (infer) {
+        if (checker.hasOption("infer")) {
             checkInvalidOptionsInferSignatures();
-            wholeProgramInference =
-                    new WholeProgramInferenceScenes(
-                            !"NullnessAnnotatedTypeFactory"
-                                    .equals(this.getClass().getSimpleName()));
+            String inferArg = checker.getOption("infer");
+            // No argument means "jaifs", for (temporary) backwards compatibility.
+            if (inferArg == null) {
+                inferArg = "jaifs";
+            }
+            switch (inferArg) {
+                case "stubs":
+                    wpiOutputFormat = WholeProgramInference.OutputFormat.STUB;
+                    break;
+                case "jaifs":
+                    wpiOutputFormat = WholeProgramInference.OutputFormat.JAIF;
+                    break;
+                default:
+                    throw new UserError(
+                            "Unexpected option to -Ainfer: "
+                                    + inferArg
+                                    + System.lineSeparator()
+                                    + "Available options: -Ainfer=jaifs, -Ainfer=stubs");
+            }
+            boolean isNullnessChecker =
+                    "NullnessAnnotatedTypeFactory".equals(this.getClass().getSimpleName());
+            wholeProgramInference = new WholeProgramInferenceScenes(!isNullnessChecker);
+        } else {
+            wholeProgramInference = null;
         }
         ignoreUninferredTypeArguments = !checker.hasOption("conservativeUninferredTypeArguments");
 
@@ -515,7 +541,7 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
         if (checker.useConservativeDefault("source")
                 || checker.useConservativeDefault("bytecode")) {
             throw new UserError(
-                    "The option -Ainfer cannot be" + " used together with conservative defaults.");
+                    "The option -Ainfer=... cannot be used together with conservative defaults.");
         }
     }
 
@@ -568,7 +594,20 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
         return new QualifierUpperBounds(this);
     }
 
-    /** Returns the WholeProgramInference instance. */
+    /**
+     * Return {@link QualifierUpperBounds} for this type factory.
+     *
+     * @return {@link QualifierUpperBounds} for this type factory
+     */
+    public QualifierUpperBounds getQualifierUpperBounds() {
+        return qualifierUpperBounds;
+    }
+
+    /**
+     * Returns the WholeProgramInference instance (may be null).
+     *
+     * @return the WholeProgramInference instance, or null
+     */
     public WholeProgramInference getWholeProgramInference() {
         return wholeProgramInference;
     }
@@ -702,6 +741,13 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
                 if (!supportedTypeQualifiers.contains(superQualifier)) {
                     throw new BugInCF(
                             "Found unsupported qualifier in SubTypeOf: %s on qualifier: %s",
+                            superQualifier.getCanonicalName(), typeQualifier.getCanonicalName());
+                }
+                if (superQualifier.getAnnotation(PolymorphicQualifier.class) != null) {
+                    // This is currently not supported. No qualifier can have a polymorphic
+                    // qualifier as super qualifier.
+                    throw new BugInCF(
+                            "Found polymorphic qualifier in SubTypeOf: %s on qualifier: %s",
                             superQualifier.getCanonicalName(), typeQualifier.getCanonicalName());
                 }
                 AnnotationMirror superAnno = AnnotationBuilder.fromClass(elements, superQualifier);
@@ -1082,11 +1128,9 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
     public void postProcessClassTree(ClassTree tree) {
         TypesIntoElements.store(processingEnv, this, tree);
         DeclarationsIntoElements.store(processingEnv, this, tree);
-        if (checker.hasOption("infer") && wholeProgramInference != null) {
-            // Write scenes into .jaif files. In order to perform the write
-            // operation only once for each .jaif file, the best location to
-            // do so is here.
-            wholeProgramInference.saveResults();
+        if (wholeProgramInference != null) {
+            // Write out the results of whole-program inference, just once for each class.
+            wholeProgramInference.writeResultsToFile(wpiOutputFormat, this.checker);
         }
     }
 
@@ -1112,7 +1156,7 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
     /**
      * Returns the set of qualifiers that are the upper bounds for a use of the type.
      *
-     * @param type
+     * @param type a type whose upper bounds to obtain
      */
     public Set<AnnotationMirror> getTypeDeclarationBounds(TypeMirror type) {
         return qualifierUpperBounds.getBoundQualifiers(type);
@@ -1198,6 +1242,9 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
                             + elt);
         }
 
+        if (checker.hasOption("mergeStubsWithSource")) {
+            type = mergeStubsIntoType(type, elt);
+        }
         // Caching is disabled if stub files are being parsed, because calls to this
         // method before the stub files are fully read can return incorrect results.
         if (shouldCache && !stubTypes.isParsing()) {
@@ -1236,10 +1283,52 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
             return fromMemberTreeCache.get(tree).deepCopy();
         }
         AnnotatedTypeMirror result = TypeFromTree.fromMember(this, tree);
+
+        if (checker.hasOption("mergeStubsWithSource")) {
+            result = mergeStubsIntoType(result, tree);
+        }
+
         if (shouldCache) {
             fromMemberTreeCache.put(tree, result.deepCopy());
         }
+
         return result;
+    }
+
+    /**
+     * Merges types from stub files for {@code tree} into {@code type} by taking the greatest lower
+     * bound of the annotations in both.
+     *
+     * @param type the type to apply stub types to
+     * @param tree the tree from which to read stub types
+     * @return type, side-effected to add the stub types
+     */
+    private AnnotatedTypeMirror mergeStubsIntoType(@Nullable AnnotatedTypeMirror type, Tree tree) {
+        Element elt = TreeUtils.elementFromTree(tree);
+        return mergeStubsIntoType(type, elt);
+    }
+
+    /**
+     * Merges types from stub files for {@code elt} into {@code type} by taking the greatest lower
+     * bound of the annotations in both.
+     *
+     * @param type the type to apply stub types to
+     * @param elt the element from which to read stub types
+     * @return the type, side-effected to add the stub types
+     */
+    private AnnotatedTypeMirror mergeStubsIntoType(
+            @Nullable AnnotatedTypeMirror type, Element elt) {
+        AnnotatedTypeMirror stubType = stubTypes.getAnnotatedTypeMirror(elt);
+        if (stubType != null) {
+            if (type == null) {
+                type = stubType;
+            } else {
+                // Must merge (rather than only take the stub type if it is a subtype)
+                // to support WPI.
+                AnnotatedTypeCombiner.combine(stubType, type, this.getQualifierHierarchy());
+            }
+        }
+        return type;
     }
 
     /**
@@ -2447,42 +2536,74 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
     // with appropriate casts to reduce casts on the client side
     // **********************************************************************
 
-    /** @see #getAnnotatedType(Tree) */
+    /**
+     * See {@link #getAnnotatedType(Tree)}.
+     *
+     * @see #getAnnotatedType(Tree)
+     */
     public final AnnotatedDeclaredType getAnnotatedType(ClassTree tree) {
         return (AnnotatedDeclaredType) getAnnotatedType((Tree) tree);
     }
 
-    /** @see #getAnnotatedType(Tree) */
+    /**
+     * See {@link #getAnnotatedType(Tree)}.
+     *
+     * @see #getAnnotatedType(Tree)
+     */
     public final AnnotatedDeclaredType getAnnotatedType(NewClassTree tree) {
         return (AnnotatedDeclaredType) getAnnotatedType((Tree) tree);
     }
 
-    /** @see #getAnnotatedType(Tree) */
+    /**
+     * See {@link #getAnnotatedType(Tree)}.
+     *
+     * @see #getAnnotatedType(Tree)
+     */
     public final AnnotatedArrayType getAnnotatedType(NewArrayTree tree) {
         return (AnnotatedArrayType) getAnnotatedType((Tree) tree);
     }
 
-    /** @see #getAnnotatedType(Tree) */
+    /**
+     * See {@link #getAnnotatedType(Tree)}.
+     *
+     * @see #getAnnotatedType(Tree)
+     */
     public final AnnotatedExecutableType getAnnotatedType(MethodTree tree) {
         return (AnnotatedExecutableType) getAnnotatedType((Tree) tree);
     }
 
-    /** @see #getAnnotatedType(Element) */
+    /**
+     * See {@link #getAnnotatedType(Element)}.
+     *
+     * @see #getAnnotatedType(Element)
+     */
     public final AnnotatedDeclaredType getAnnotatedType(TypeElement elt) {
         return (AnnotatedDeclaredType) getAnnotatedType((Element) elt);
     }
 
-    /** @see #getAnnotatedType(Element) */
+    /**
+     * See {@link #getAnnotatedType(Element)}.
+     *
+     * @see #getAnnotatedType(Element)
+     */
     public final AnnotatedExecutableType getAnnotatedType(ExecutableElement elt) {
         return (AnnotatedExecutableType) getAnnotatedType((Element) elt);
     }
 
-    /** @see #fromElement(Element) */
+    /**
+     * See {@link #fromElement(Element)}.
+     *
+     * @see #fromElement(Element)
+     */
     public final AnnotatedDeclaredType fromElement(TypeElement elt) {
         return (AnnotatedDeclaredType) fromElement((Element) elt);
     }
 
-    /** @see #fromElement(Element) */
+    /**
+     * See {@link #fromElement(Element)}.
+     *
+     * @see #fromElement(Element)
+     */
     public final AnnotatedExecutableType fromElement(ExecutableElement elt) {
         return (AnnotatedExecutableType) fromElement((Element) elt);
     }
@@ -3426,6 +3547,170 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
             }
         }
         return result;
+    }
+
+    /**
+     * Whether or not the {@code annotatedTypeMirror} has a qualifier parameter.
+     *
+     * @param annotatedTypeMirror AnnotatedTypeMirror to check
+     * @param top the top of the hierarchy to check
+     * @return true if the type has a qualifier parameter
+     */
+    public boolean hasQualifierParameterInHierarchy(
+            AnnotatedTypeMirror annotatedTypeMirror, AnnotationMirror top) {
+        return AnnotationUtils.containsSame(
+                getQualifierParameterHierarchies(annotatedTypeMirror), top);
+    }
+
+    /**
+     * Whether or not the {@code element} has a qualifier parameter.
+     *
+     * @param element element to check
+     * @param top the top of the hierarchy to check
+     * @return true if the type has a qualifier parameter
+     */
+    public boolean hasQualifierParameterInHierarchy(
+            @Nullable Element element, AnnotationMirror top) {
+        if (element == null) {
+            return false;
+        }
+        return AnnotationUtils.containsSame(getQualifierParameterHierarchies(element), top);
+    }
+
+    /**
+     * Returns whether the {@code HasQualifierParameter} annotation was explicitly written on {@code
+     * element} for the hierarchy given by {@code top}.
+     *
+     * @param element Element to check
+     * @param top the top qualifier for the hierarchy to check
+     * @return whether the class given by {@code element} has been explicitly annotated with {@code
+     *     HasQualifierParameter} for the given hierarchy
+     */
+    public boolean hasExplicitQualifierParameterInHierarchy(Element element, AnnotationMirror top) {
+        return AnnotationUtils.containsSame(
+                getSupportedAnnotationsInElementAnnotation(element, HasQualifierParameter.class),
+                top);
+    }
+
+    /**
+     * Returns whether the {@code NoQualifierParameter} annotation was explicitly written on {@code
+     * element} for the hierarchy given by {@code top}.
+     *
+     * @param element Element to check
+     * @param top the top qualifier for the hierarchy to check
+     * @return whether the class given by {@code element} has been explicitly annotated with {@code
+     *     NoQualifierParameter} for the given hierarchy
+     */
+    public boolean hasExplicitNoQualifierParameterInHierarchy(
+            Element element, AnnotationMirror top) {
+        return AnnotationUtils.containsSame(
+                getSupportedAnnotationsInElementAnnotation(element, NoQualifierParameter.class),
+                top);
+    }
+
+    /**
+     * Returns the set of top annotations representing all the hierarchies for which this type has a
+     * qualifier parameter.
+     *
+     * @param annotatedType AnnotatedTypeMirror to check
+     * @return the set of top annotations representing all the hierarchies for which this type has a
+     *     qualifier parameter
+     */
+    public Set<AnnotationMirror> getQualifierParameterHierarchies(
+            AnnotatedTypeMirror annotatedType) {
+        while (annotatedType.getKind() == TypeKind.TYPEVAR
+                || annotatedType.getKind() == TypeKind.WILDCARD) {
+            if (annotatedType.getKind() == TypeKind.TYPEVAR) {
+                annotatedType = ((AnnotatedTypeVariable) annotatedType).getUpperBound();
+            } else if (annotatedType.getKind() == TypeKind.WILDCARD) {
+                annotatedType = ((AnnotatedWildcardType) annotatedType).getSuperBound();
+            }
+        }
+
+        if (annotatedType.getKind() != TypeKind.DECLARED) {
+            return Collections.emptySet();
+        }
+
+        AnnotatedDeclaredType declaredType = (AnnotatedDeclaredType) annotatedType;
+        Element element = declaredType.getUnderlyingType().asElement();
+        if (element == null) {
+            return Collections.emptySet();
+        }
+        return getQualifierParameterHierarchies(element);
+    }
+
+    /**
+     * Returns the set of top annotations representing all the hierarchies for which this element
+     * has a qualifier parameter.
+     *
+     * @param element Element to check
+     * @return the set of top annotations representing all the hierarchies for which this element
+     *     has a qualifier parameter
+     */
+    public Set<AnnotationMirror> getQualifierParameterHierarchies(Element element) {
+        if (!ElementUtils.isTypeDeclaration(element)) {
+            return Collections.emptySet();
+        }
+
+        Set<AnnotationMirror> found = AnnotationUtils.createAnnotationSet();
+        found.addAll(
+                getSupportedAnnotationsInElementAnnotation(element, HasQualifierParameter.class));
+        Set<AnnotationMirror> hasQualifierParameterTops = AnnotationUtils.createAnnotationSet();
+        PackageElement packageElement = ElementUtils.enclosingPackage(element);
+
+        // Traverse all packages containing this element.
+        while (packageElement != null) {
+            Set<AnnotationMirror> packageDefaultTops =
+                    getSupportedAnnotationsInElementAnnotation(
+                            packageElement, HasQualifierParameter.class);
+            hasQualifierParameterTops.addAll(packageDefaultTops);
+
+            packageElement = ElementUtils.parentPackage(packageElement, elements);
+        }
+
+        Set<AnnotationMirror> noQualifierParamClasses =
+                getSupportedAnnotationsInElementAnnotation(element, NoQualifierParameter.class);
+        for (AnnotationMirror anno : hasQualifierParameterTops) {
+            if (!AnnotationUtils.containsSame(noQualifierParamClasses, anno)) {
+                found.add(anno);
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Returns a set of supported annotation mirrors corresponding to the annotation classes listed
+     * in the value element of an annotation with class {@code annoClass} on {@code element}.
+     *
+     * @param element Element to check
+     * @param annoClass the class for an annotation that's written on elements, whose value element
+     *     is a list of annotation classes
+     * @return the set of supported annotations with classes listed in the value element of an
+     *     annotation with class {@code annoClass} on the {@code element}. Returns an empty set if
+     *     {@code annoClass} is not written on {@code element} or {@code element} is null.
+     */
+    private Set<AnnotationMirror> getSupportedAnnotationsInElementAnnotation(
+            @Nullable Element element, Class<? extends Annotation> annoClass) {
+        if (element == null) {
+            return Collections.emptySet();
+        }
+        // TODO: caching
+        AnnotationMirror annotation = getDeclAnnotation(element, annoClass);
+        if (annotation == null) {
+            return Collections.emptySet();
+        }
+
+        Set<AnnotationMirror> found = AnnotationUtils.createAnnotationSet();
+        List<Name> qualClasses =
+                AnnotationUtils.getElementValueClassNames(annotation, "value", true);
+        for (Name qual : qualClasses) {
+            AnnotationMirror annotationMirror = AnnotationBuilder.fromName(elements, qual);
+            if (isSupportedQualifier(annotationMirror)) {
+                found.add(annotationMirror);
+            }
+        }
+        return found;
     }
 
     /**

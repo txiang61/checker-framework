@@ -54,7 +54,7 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
     protected final TypeMirror underlyingType;
     protected final Set<AnnotationMirror> annotations;
 
-    public CFAbstractValue(
+    protected CFAbstractValue(
             CFAbstractAnalysis<V, ?, ?> analysis,
             Set<AnnotationMirror> annotations,
             TypeMirror underlyingType) {
@@ -157,7 +157,11 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
         return Objects.hash(getAnnotations(), underlyingType);
     }
 
-    /** @return the string representation as a comma-separated list */
+    /**
+     * Returns the string representation as a comma-separated list.
+     *
+     * @return the string representation as a comma-separated list
+     */
     @SideEffectFree
     @Override
     public String toString() {
@@ -217,13 +221,34 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
         return analysis.createAbstractValue(mostSpecific, mostSpecifTypeMirror);
     }
 
+    /** Computes the most specific annotations. */
     private class MostSpecificVisitor extends AnnotationSetAndTypeMirrorVisitor {
+        /** If set to true, then this visitor was unable to find a most specific annotation. */
         boolean error = false;
-        // TypeMirror backupTypeMirror;
-        Set<AnnotationMirror> backupSet;
-        // AnnotatedTypeVariable backupAtv;
-        Set<AnnotationMirror> mostSpecific;
 
+        /** Set of annotations to use if a most specific value cannot be found. */
+        final Set<AnnotationMirror> backupSet;
+
+        /** Set of most specific annotations. Annotations are added by the visitor. */
+        final Set<AnnotationMirror> mostSpecific;
+
+        /** TypeMirror for the "a" value. */
+        final TypeMirror aTypeMirror;
+
+        /** TypeMirror for the "b" value. */
+        final TypeMirror bTypeMirror;
+
+        /**
+         * Create a {@link MostSpecificVisitor}.
+         *
+         * @param result the most specific type mirror
+         * @param aTypeMirror type of the "a" value
+         * @param bTypeMirror type of the "b" value
+         * @param aSet annotations in the "a" value
+         * @param bSet annotations in the "b" value
+         * @param backup value to use if no most specific value is found
+         * @param mostSpecific set to which the most specific value is added
+         */
         public MostSpecificVisitor(
                 TypeMirror result,
                 TypeMirror aTypeMirror,
@@ -233,6 +258,8 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
                 V backup,
                 Set<AnnotationMirror> mostSpecific) {
             super(result, aTypeMirror, bTypeMirror, aSet, bSet);
+            this.aTypeMirror = aTypeMirror;
+            this.bTypeMirror = bTypeMirror;
             this.mostSpecific = mostSpecific;
             if (backup != null) {
                 this.backupSet = backup.getAnnotations();
@@ -260,14 +287,31 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
         protected void visitAnnotationExistInBothSets(
                 AnnotationMirror a, AnnotationMirror b, AnnotationMirror top) {
             QualifierHierarchy hierarchy = analysis.getTypeFactory().getQualifierHierarchy();
-            if (hierarchy.isSubtype(a, b)) {
-                mostSpecific.add(a);
-            } else if (hierarchy.isSubtype(b, a)) {
-                mostSpecific.add(b);
+            if (analysis.getTypeFactory()
+                            .hasQualifierParameterInHierarchy(
+                                    TypesUtils.getTypeElement(aTypeMirror), top)
+                    && analysis.getTypeFactory()
+                            .hasQualifierParameterInHierarchy(
+                                    TypesUtils.getTypeElement(bTypeMirror), top)) {
+                // Both types have qualifier parameters, so the annotations must be exact.
+                if (hierarchy.isSubtype(a, b) && hierarchy.isSubtype(b, a)) {
+                    mostSpecific.add(b);
+                } else {
+                    AnnotationMirror backup = getBackUpAnnoIn(top);
+                    if (backup != null) {
+                        mostSpecific.add(backup);
+                    }
+                }
             } else {
-                AnnotationMirror backup = getBackUpAnnoIn(top);
-                if (backup != null) {
-                    mostSpecific.add(backup);
+                if (hierarchy.isSubtype(a, b)) {
+                    mostSpecific.add(a);
+                } else if (hierarchy.isSubtype(b, a)) {
+                    mostSpecific.add(b);
+                } else {
+                    AnnotationMirror backup = getBackUpAnnoIn(top);
+                    if (backup != null) {
+                        mostSpecific.add(backup);
+                    }
                 }
             }
         }
@@ -420,7 +464,7 @@ public abstract class CFAbstractValue<V extends CFAbstractValue<V>> implements A
         private Set<AnnotationMirror> aSet;
         private Set<AnnotationMirror> bSet;
 
-        public AnnotationSetAndTypeMirrorVisitor(
+        protected AnnotationSetAndTypeMirrorVisitor(
                 TypeMirror result,
                 TypeMirror aTypeMirror,
                 TypeMirror bTypeMirror,
