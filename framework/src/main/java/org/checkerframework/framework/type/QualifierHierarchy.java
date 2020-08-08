@@ -23,11 +23,10 @@ public abstract class QualifierHierarchy {
      *
      * @return whether the instance is valid
      */
-	public boolean isValid() {
-	    // For most QH the simplest check is that there are qualifiers.
-	    return !getTypeQualifiers().isEmpty();
-	}
-
+    public boolean isValid() {
+        // For most QH the simplest check is that there are qualifiers.
+        return !getTypeQualifiers().isEmpty();
+    }
 
     // **********************************************************************
     // Getter methods about this hierarchy

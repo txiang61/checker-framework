@@ -354,7 +354,7 @@ public class MultiGraphQualifierHierarchy extends QualifierHierarchy {
         }
         return lhs.size() == valid;
     }
-    
+
     @Override
     @Deprecated
     public Set<? extends AnnotationMirror> getTypeQualifiers() {
