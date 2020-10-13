@@ -120,7 +120,7 @@ public abstract class CFAbstractAnalysis<
      * @return the conditional evaluation result used by the analysis
      */
     public ConditionEvaluator<V, S> createConditionEvaluator() {
-        return atypeFactory.createFlowConditionalEvaluator(this);
+        return atypeFactory.createFlowConditionEvaluator(this);
     }
 
     /**

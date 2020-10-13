@@ -431,7 +431,7 @@ public abstract class GenericAnnotatedTypeFactory<
      * @param analysis the appropriate analysis
      * @return a condition evaluator
      */
-    public ConditionEvaluator<Value, Store> createFlowConditionalEvaluator(
+    public ConditionEvaluator<Value, Store> createFlowConditionEvaluator(
             CFAbstractAnalysis<Value, Store, TransferFunction> analysis) {
 
         // Try to reflectively load the visitor.
@@ -449,7 +449,7 @@ public abstract class GenericAnnotatedTypeFactory<
             checkerClass = checkerClass.getSuperclass();
         }
 
-        // If a conditional evaluator couldn't be loaded reflectively, return the
+        // If a condition evaluator couldn't be loaded reflectively, return the
         // default.
         ConditionEvaluator<Value, Store> ret = new ConditionEvaluator<Value, Store>();
         return ret;

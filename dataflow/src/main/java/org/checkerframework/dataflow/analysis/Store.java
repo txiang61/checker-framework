@@ -41,6 +41,9 @@ public interface Store<S extends Store<S>> {
      */
     public boolean isDeadBranch();
 
+    /** This store belongs to a node in a dead branch. Make this store dead. */
+    public void setDeadBranch();
+
     /**
      * Returns an exact copy of this store.
      *

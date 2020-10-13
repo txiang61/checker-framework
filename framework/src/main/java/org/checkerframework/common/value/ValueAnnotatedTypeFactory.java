@@ -267,7 +267,7 @@ public class ValueAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     }
 
     @Override
-    public ConditionEvaluator<CFValue, CFStore> createFlowConditionalEvaluator(
+    public ConditionEvaluator<CFValue, CFStore> createFlowConditionEvaluator(
             CFAbstractAnalysis<CFValue, CFStore, CFTransfer> analysis) {
         return new ValueConditionEvaluator(analysis);
     }

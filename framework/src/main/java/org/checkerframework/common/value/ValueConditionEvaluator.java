@@ -40,7 +40,7 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
     }
 
     @Override
-    public ConditionalFlow visitGreaterThan(
+    public ConditionFlow visitGreaterThan(
             GreaterThanNode node, TransferInput<CFValue, CFStore> in) {
         CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
         CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
@@ -50,16 +50,16 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
             if (leftRange.from > rightRange.to) {
-                return ConditionalFlow.THEN;
+                return ConditionFlow.TRUE;
             } else if (leftRange.to <= rightRange.from) {
-                return ConditionalFlow.ELSE;
+                return ConditionFlow.FALSE;
             }
         }
         return super.visitGreaterThan(node, in);
     }
 
     @Override
-    public ConditionalFlow visitGreaterThanOrEqual(
+    public ConditionFlow visitGreaterThanOrEqual(
             GreaterThanOrEqualNode node, TransferInput<CFValue, CFStore> in) {
         CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
         CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
@@ -69,16 +69,16 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
             if (leftRange.from >= rightRange.to) {
-                return ConditionalFlow.THEN;
+                return ConditionFlow.TRUE;
             } else if (leftRange.to < rightRange.from) {
-                return ConditionalFlow.ELSE;
+                return ConditionFlow.FALSE;
             }
         }
         return super.visitGreaterThanOrEqual(node, in);
     }
 
     @Override
-    public ConditionalFlow visitLessThanOrEqual(
+    public ConditionFlow visitLessThanOrEqual(
             LessThanOrEqualNode node, TransferInput<CFValue, CFStore> in) {
         CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
         CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
@@ -88,16 +88,16 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
             if (leftRange.to <= rightRange.from) {
-                return ConditionalFlow.THEN;
+                return ConditionFlow.TRUE;
             } else if (leftRange.from > rightRange.to) {
-                return ConditionalFlow.ELSE;
+                return ConditionFlow.FALSE;
             }
         }
         return super.visitLessThanOrEqual(node, in);
     }
 
     @Override
-    public ConditionalFlow visitLessThan(LessThanNode node, TransferInput<CFValue, CFStore> in) {
+    public ConditionFlow visitLessThan(LessThanNode node, TransferInput<CFValue, CFStore> in) {
         CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
         CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
         AnnotationMirror leftAm = getValueAnnotation(leftValue);
@@ -106,9 +106,9 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
             Range leftRange = ValueAnnotatedTypeFactory.getRange(leftAm);
             Range rightRange = ValueAnnotatedTypeFactory.getRange(rightAm);
             if (leftRange.to < rightRange.from) {
-                return ConditionalFlow.THEN;
+                return ConditionFlow.TRUE;
             } else if (leftRange.from >= rightRange.to) {
-                return ConditionalFlow.ELSE;
+                return ConditionFlow.FALSE;
             }
         }
 
@@ -116,7 +116,7 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
     }
 
     @Override
-    public ConditionalFlow visitEqualTo(EqualToNode node, TransferInput<CFValue, CFStore> in) {
+    public ConditionFlow visitEqualTo(EqualToNode node, TransferInput<CFValue, CFStore> in) {
         CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
         CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
         AnnotationMirror leftAm = getValueAnnotation(leftValue);
@@ -127,16 +127,16 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
             if (leftRange.to == leftRange.from
                     && leftRange.to == rightRange.to
                     && leftRange.from == rightRange.from) {
-                return ConditionalFlow.THEN;
+                return ConditionFlow.TRUE;
             } else if (leftRange.to < rightRange.from || rightRange.to < leftRange.from) {
-                return ConditionalFlow.ELSE;
+                return ConditionFlow.FALSE;
             }
         }
         return super.visitEqualTo(node, in);
     }
 
     @Override
-    public ConditionalFlow visitNotEqual(NotEqualNode node, TransferInput<CFValue, CFStore> in) {
+    public ConditionFlow visitNotEqual(NotEqualNode node, TransferInput<CFValue, CFStore> in) {
         CFValue leftValue = in.getValueOfSubNode(node.getLeftOperand());
         CFValue rightValue = in.getValueOfSubNode(node.getRightOperand());
         AnnotationMirror leftAm = getValueAnnotation(leftValue);
@@ -147,9 +147,9 @@ public class ValueConditionEvaluator extends ConditionEvaluator<CFValue, CFStore
             if (leftRange.to == leftRange.from
                     && leftRange.to == rightRange.to
                     && leftRange.from == rightRange.from) {
-                return ConditionalFlow.ELSE;
+                return ConditionFlow.FALSE;
             } else if (leftRange.to < rightRange.from || rightRange.to < leftRange.from) {
-                return ConditionalFlow.THEN;
+                return ConditionFlow.TRUE;
             }
         }
         return super.visitNotEqual(node, in);

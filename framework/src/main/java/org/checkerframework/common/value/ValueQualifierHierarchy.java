@@ -10,7 +10,7 @@ import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.AnnotationUtils;
 
 /** The qualifier hierarchy for the Value type system. */
-final class ValueQualifierHierarchy extends MultiGraphQualifierHierarchy {
+public class ValueQualifierHierarchy extends MultiGraphQualifierHierarchy {
 
     /** The type factory to use. */
     final ValueAnnotatedTypeFactory atypeFactory;

@@ -95,6 +95,10 @@ public class LiveVarStore implements Store<LiveVarStore> {
         return false;
     }
 
+    /** Do nothing. */
+    @Override
+    public void setDeadBranch() {}
+
     @Override
     public boolean equals(@Nullable Object obj) {
         if (!(obj instanceof LiveVarStore)) {

@@ -1,5 +1,6 @@
 package org.checkerframework.dataflow.analysis;
 
+import org.checkerframework.dataflow.cfg.node.AbstractNodeVisitor;
 import org.checkerframework.dataflow.cfg.node.ConditionalAndNode;
 import org.checkerframework.dataflow.cfg.node.ConditionalNotNode;
 import org.checkerframework.dataflow.cfg.node.ConditionalOrNode;
@@ -12,16 +13,17 @@ import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.node.NotEqualNode;
 
 /**
- * Evaluates the flow at a boolean expression. This evaluator is used for dead branch elimination.
- * If return is THEN, then the else branch is a dead branch. If return is ELSE, then the then branch
- * is a dead branch. If return is BOTH, then both branches are not dead.
+ * Evaluates the static knowledge which branches will be taken. This evaluator is used for dead
+ * branch elimination. TRUE means only then branch is taken, FALSE only else branch, UNKNOWN means
+ * both could be taken.
  */
-public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> {
+public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>>
+        extends AbstractNodeVisitor<ConditionEvaluator.ConditionFlow, TransferInput<V, S>> {
 
-    public enum ConditionalFlow {
-        THEN,
-        ELSE,
-        BOTH
+    public enum ConditionFlow {
+        TRUE,
+        FALSE,
+        UNKNOWN
     }
 
     /**
@@ -31,7 +33,8 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    private ConditionalFlow visitNode(Node node, TransferInput<V, S> in) {
+    @Override
+    public ConditionFlow visitNode(Node node, TransferInput<V, S> in) {
         if (node instanceof GreaterThanNode) {
             return visitGreaterThan((GreaterThanNode) node, in);
         }
@@ -59,7 +62,7 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
         if (node instanceof ConditionalNotNode) {
             return visitConditionalNot((ConditionalNotNode) node, in);
         }
-        return ConditionalFlow.BOTH;
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -69,8 +72,9 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitGreaterThan(GreaterThanNode node, TransferInput<V, S> in) {
-        return ConditionalFlow.BOTH;
+    @Override
+    public ConditionFlow visitGreaterThan(GreaterThanNode node, TransferInput<V, S> in) {
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -80,9 +84,10 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitGreaterThanOrEqual(
+    @Override
+    public ConditionFlow visitGreaterThanOrEqual(
             GreaterThanOrEqualNode node, TransferInput<V, S> in) {
-        return ConditionalFlow.BOTH;
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -92,8 +97,9 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitLessThanOrEqual(LessThanOrEqualNode node, TransferInput<V, S> in) {
-        return ConditionalFlow.BOTH;
+    @Override
+    public ConditionFlow visitLessThanOrEqual(LessThanOrEqualNode node, TransferInput<V, S> in) {
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -103,8 +109,9 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitLessThan(LessThanNode node, TransferInput<V, S> in) {
-        return ConditionalFlow.BOTH;
+    @Override
+    public ConditionFlow visitLessThan(LessThanNode node, TransferInput<V, S> in) {
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -114,8 +121,9 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitEqualTo(EqualToNode node, TransferInput<V, S> in) {
-        return ConditionalFlow.BOTH;
+    @Override
+    public ConditionFlow visitEqualTo(EqualToNode node, TransferInput<V, S> in) {
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -125,8 +133,9 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitNotEqual(NotEqualNode node, TransferInput<V, S> in) {
-        return ConditionalFlow.BOTH;
+    @Override
+    public ConditionFlow visitNotEqual(NotEqualNode node, TransferInput<V, S> in) {
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -137,15 +146,16 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitConditionalAnd(ConditionalAndNode node, TransferInput<V, S> in) {
-        ConditionalFlow left = visitNode(node.getLeftOperand(), in);
-        ConditionalFlow right = visitNode(node.getRightOperand(), in);
-        if (left == ConditionalFlow.THEN && right == ConditionalFlow.THEN) {
-            return ConditionalFlow.THEN;
-        } else if (left == ConditionalFlow.ELSE || right == ConditionalFlow.ELSE) {
-            return ConditionalFlow.ELSE;
+    @Override
+    public ConditionFlow visitConditionalAnd(ConditionalAndNode node, TransferInput<V, S> in) {
+        ConditionFlow left = visitNode(node.getLeftOperand(), in);
+        ConditionFlow right = visitNode(node.getRightOperand(), in);
+        if (left == ConditionFlow.TRUE && right == ConditionFlow.TRUE) {
+            return ConditionFlow.TRUE;
+        } else if (left == ConditionFlow.FALSE || right == ConditionFlow.FALSE) {
+            return ConditionFlow.FALSE;
         }
-        return ConditionalFlow.BOTH;
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -156,15 +166,16 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitConditionalOr(ConditionalOrNode node, TransferInput<V, S> in) {
-        ConditionalFlow left = visitNode(node.getLeftOperand(), in);
-        ConditionalFlow right = visitNode(node.getRightOperand(), in);
-        if (left == ConditionalFlow.THEN || right == ConditionalFlow.THEN) {
-            return ConditionalFlow.THEN;
-        } else if (left == ConditionalFlow.ELSE && right == ConditionalFlow.ELSE) {
-            return ConditionalFlow.ELSE;
+    @Override
+    public ConditionFlow visitConditionalOr(ConditionalOrNode node, TransferInput<V, S> in) {
+        ConditionFlow left = visitNode(node.getLeftOperand(), in);
+        ConditionFlow right = visitNode(node.getRightOperand(), in);
+        if (left == ConditionFlow.TRUE || right == ConditionFlow.TRUE) {
+            return ConditionFlow.TRUE;
+        } else if (left == ConditionFlow.FALSE && right == ConditionFlow.FALSE) {
+            return ConditionFlow.FALSE;
         }
-        return ConditionalFlow.BOTH;
+        return ConditionFlow.UNKNOWN;
     }
 
     /**
@@ -174,14 +185,15 @@ public class ConditionEvaluator<V extends AbstractValue<V>, S extends Store<S>> 
      * @param in the transfer input storing the values of the node
      * @return the flow at a boolean expression
      */
-    public ConditionalFlow visitConditionalNot(ConditionalNotNode node, TransferInput<V, S> in) {
-        ConditionalFlow sub = visitNode(node.getOperand(), in);
-        if (sub == ConditionalFlow.THEN) {
-            return ConditionalFlow.ELSE;
+    @Override
+    public ConditionFlow visitConditionalNot(ConditionalNotNode node, TransferInput<V, S> in) {
+        ConditionFlow sub = visitNode(node.getOperand(), in);
+        if (sub == ConditionFlow.TRUE) {
+            return ConditionFlow.FALSE;
         }
-        if (sub == ConditionalFlow.ELSE) {
-            return ConditionalFlow.THEN;
+        if (sub == ConditionFlow.FALSE) {
+            return ConditionFlow.TRUE;
         }
-        return ConditionalFlow.BOTH;
+        return ConditionFlow.UNKNOWN;
     }
 }

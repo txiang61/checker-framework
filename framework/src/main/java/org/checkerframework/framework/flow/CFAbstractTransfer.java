@@ -22,7 +22,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.ConditionEvaluator;
-import org.checkerframework.dataflow.analysis.ConditionEvaluator.ConditionalFlow;
+import org.checkerframework.dataflow.analysis.ConditionEvaluator.ConditionFlow;
 import org.checkerframework.dataflow.analysis.ConditionalTransferResult;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
 import org.checkerframework.dataflow.analysis.FlowExpressions.ClassName;
@@ -709,11 +709,11 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> transferResult = super.visitGreaterThan(n, p);
         S thenStore = transferResult.getThenStore();
         S elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitGreaterThan(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitGreaterThan(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
         return new ConditionalTransferResult<>(
                 transferResult.getResultValue(), thenStore, elseStore);
@@ -725,11 +725,11 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> transferResult = super.visitGreaterThanOrEqual(n, p);
         S thenStore = transferResult.getThenStore();
         S elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitGreaterThanOrEqual(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitGreaterThanOrEqual(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
         return new ConditionalTransferResult<>(
                 transferResult.getResultValue(), thenStore, elseStore);
@@ -740,11 +740,11 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> transferResult = super.visitLessThan(n, p);
         S thenStore = transferResult.getThenStore();
         S elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitLessThan(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitLessThan(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
         return new ConditionalTransferResult<>(
                 transferResult.getResultValue(), thenStore, elseStore);
@@ -755,11 +755,11 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> transferResult = super.visitLessThanOrEqual(n, p);
         S thenStore = transferResult.getThenStore();
         S elseStore = transferResult.getElseStore();
-        ConditionalFlow flow = condition_eval.visitLessThanOrEqual(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitLessThanOrEqual(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
         return new ConditionalTransferResult<>(
                 transferResult.getResultValue(), thenStore, elseStore);
@@ -771,11 +771,11 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> result = super.visitConditionalNot(n, p);
         S thenStore = result.getThenStore();
         S elseStore = result.getElseStore();
-        ConditionalFlow flow = condition_eval.visitConditionalNot(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            thenStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            elseStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitConditionalNot(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            thenStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            elseStore.setDeadBranch();
         }
         return new ConditionalTransferResult<>(result.getResultValue(), elseStore, thenStore);
     }
@@ -785,11 +785,11 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> result = super.visitConditionalAnd(n, p);
         S thenStore = result.getThenStore();
         S elseStore = result.getElseStore();
-        ConditionalFlow flow = condition_eval.visitConditionalAnd(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitConditionalAnd(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
         return new ConditionalTransferResult<>(result.getResultValue(), thenStore, elseStore);
     }
@@ -799,11 +799,11 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> result = super.visitConditionalOr(n, p);
         S thenStore = result.getThenStore();
         S elseStore = result.getElseStore();
-        ConditionalFlow flow = condition_eval.visitConditionalOr(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitConditionalOr(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
         return new ConditionalTransferResult<>(result.getResultValue(), thenStore, elseStore);
     }
@@ -824,11 +824,11 @@ public abstract class CFAbstractTransfer<
 
         S thenStore = res.getThenStore();
         S elseStore = res.getElseStore();
-        ConditionalFlow flow = condition_eval.visitEqualTo(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitEqualTo(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
 
         return new ConditionalTransferResult<>(res.getResultValue(), thenStore, elseStore);
@@ -850,11 +850,11 @@ public abstract class CFAbstractTransfer<
 
         S thenStore = res.getThenStore();
         S elseStore = res.getElseStore();
-        ConditionalFlow flow = condition_eval.visitNotEqual(n, p);
-        if (flow == ConditionalFlow.THEN) {
-            elseStore.setDeadBranch(true);
-        } else if (flow == ConditionalFlow.ELSE) {
-            thenStore.setDeadBranch(true);
+        ConditionFlow flow = condition_eval.visitNotEqual(n, p);
+        if (flow == ConditionFlow.TRUE) {
+            elseStore.setDeadBranch();
+        } else if (flow == ConditionFlow.FALSE) {
+            thenStore.setDeadBranch();
         }
 
         return new ConditionalTransferResult<>(res.getResultValue(), thenStore, elseStore);
