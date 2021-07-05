@@ -1478,7 +1478,7 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
             addAnnotationFromFieldInvariant(type, owner, (VariableElement) element);
         }
         addComputedTypeAnnotations(element, type);
-        if (viewpointAdapter != null) {
+        if (viewpointAdapter != null && type.getKind() != TypeKind.EXECUTABLE) {
             viewpointAdapter.viewpointAdaptMember(owner, element, type);
         }
     }
@@ -2104,14 +2104,17 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
             ExpressionTree tree, ExecutableElement methodElt, AnnotatedTypeMirror receiverType) {
 
         AnnotatedExecutableType memberType = getAnnotatedType(methodElt); // get unsubstituted type
+        // since viewpoint adaption may introduce new poly annotation which should not be resolved,
+        // firstly do poly resolution
+
         methodFromUsePreSubstitution(tree, memberType);
+        if (viewpointAdapter != null) {
+            viewpointAdapter.viewpointAdaptMethod(receiverType, methodElt, memberType);
+        }
 
         AnnotatedExecutableType methodType =
                 AnnotatedTypes.asMemberOf(types, this, receiverType, methodElt, memberType);
         List<AnnotatedTypeMirror> typeargs = new ArrayList<>(methodType.getTypeVariables().size());
-        if (viewpointAdapter != null) {
-            viewpointAdapter.viewpointAdaptMethod(receiverType, methodElt, methodType);
-        }
 
         Map<TypeVariable, AnnotatedTypeMirror> typeVarMapping =
                 AnnotatedTypes.findTypeArguments(processingEnv, this, tree, methodElt, methodType);
@@ -2244,8 +2247,14 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
         ExecutableElement ctor = TreeUtils.constructor(tree);
         AnnotatedTypeMirror type = fromNewClass(tree);
         addComputedTypeAnnotations(tree, type);
+
         AnnotatedExecutableType con = getAnnotatedType(ctor); // get unsubstituted type
+
+        // see methodFromUse for the reason of ordering
         constructorFromUsePreSubstitution(tree, con);
+        if (viewpointAdapter != null) {
+            viewpointAdapter.viewpointAdaptConstructor(type, ctor, con);
+        }
 
         con = AnnotatedTypes.asMemberOf(types, this, type, ctor, con);
 
@@ -2259,9 +2268,6 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
         }
 
         List<AnnotatedTypeMirror> typeargs = new ArrayList<>(con.getTypeVariables().size());
-        if (viewpointAdapter != null) {
-            viewpointAdapter.viewpointAdaptConstructor(type, ctor, con);
-        }
 
         Map<TypeVariable, AnnotatedTypeMirror> typeVarMapping =
                 AnnotatedTypes.findTypeArguments(processingEnv, this, tree, ctor, con);
@@ -3118,6 +3124,19 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
      */
     public final void setEnclosingElementForArtificialTree(Tree node, Element enclosing) {
         artificialTreeToEnclosingElementMap.put(node, enclosing);
+    }
+
+    /**
+     * Create an artificial tree path for an artificial tree.
+     *
+     * <p>See {@code
+     * org.checkerframework.framework.flow.CFCFGBuilder.CFCFGTranslationPhaseOne.handleArtificialTree(Tree)}.
+     *
+     * @param node the artificial {@link Tree} to create path for
+     * @param path the {@link TreePath} of the artificial tree
+     */
+    public void createTreePathForArtificialTree(Tree node, TreePath path) {
+        treePathCache.addPath(node, path);
     }
 
     /**
